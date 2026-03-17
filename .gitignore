@@ -1,0 +1,24 @@
+# Gradle / Kotlin
+.gradle/
+.kotlin/
+build/
+*/build/
+
+# IDE / editor
+.idea/
+.vscode/
+*.iml
+
+# Local machine configuration
+local.properties
+keystore.properties
+*.jks
+*.keystore
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Android / misc
+captures/
+*.hprof
