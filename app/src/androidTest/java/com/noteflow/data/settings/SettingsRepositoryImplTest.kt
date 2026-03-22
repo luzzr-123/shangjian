@@ -21,6 +21,9 @@ class SettingsRepositoryImplTest {
             it.copy(
                 defaultTaskRepeatIntervalMinutes = 45,
                 defaultHabitRepeatIntervalMinutes = 90,
+                showCompletedTasks = true,
+                showOnlyTodayHabits = true,
+                showDeletedHabits = true,
                 settingsUpdatedAt = 1234L,
             )
         }
@@ -29,6 +32,9 @@ class SettingsRepositoryImplTest {
 
         assertEquals(45, restored.defaultTaskRepeatIntervalMinutes)
         assertEquals(90, restored.defaultHabitRepeatIntervalMinutes)
+        assertEquals(true, restored.showCompletedTasks)
+        assertEquals(true, restored.showOnlyTodayHabits)
+        assertEquals(true, restored.showDeletedHabits)
         assertEquals(1234L, restored.settingsUpdatedAt)
 
         repository.replaceReminderPreferences(baseline)

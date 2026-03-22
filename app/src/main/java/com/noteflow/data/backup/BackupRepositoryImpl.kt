@@ -443,6 +443,9 @@ class BackupRepositoryImpl @Inject constructor(
     private fun ReminderPreferences.toPayload() = ReminderPreferencesPayload(
         defaultTaskRepeatIntervalMinutes = defaultTaskRepeatIntervalMinutes,
         defaultHabitRepeatIntervalMinutes = defaultHabitRepeatIntervalMinutes,
+        showCompletedTasks = showCompletedTasks,
+        showOnlyTodayHabits = showOnlyTodayHabits,
+        showDeletedHabits = showDeletedHabits,
         settingsUpdatedAt = settingsUpdatedAt,
     )
 
@@ -559,6 +562,9 @@ class BackupRepositoryImpl @Inject constructor(
     private fun ReminderPreferencesPayload.toDomain() = ReminderPreferences(
         defaultTaskRepeatIntervalMinutes = defaultTaskRepeatIntervalMinutes,
         defaultHabitRepeatIntervalMinutes = defaultHabitRepeatIntervalMinutes,
+        showCompletedTasks = showCompletedTasks,
+        showOnlyTodayHabits = showOnlyTodayHabits,
+        showDeletedHabits = showDeletedHabits,
         settingsUpdatedAt = settingsUpdatedAt,
     )
 
@@ -698,6 +704,9 @@ class BackupRepositoryImpl @Inject constructor(
     private data class ReminderPreferencesPayload(
         val defaultTaskRepeatIntervalMinutes: Int = 60,
         val defaultHabitRepeatIntervalMinutes: Int = 60,
+        val showCompletedTasks: Boolean = false,
+        val showOnlyTodayHabits: Boolean = false,
+        val showDeletedHabits: Boolean = false,
         val settingsUpdatedAt: Long = 0L,
     )
 

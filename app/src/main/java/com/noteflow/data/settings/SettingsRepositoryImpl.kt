@@ -3,6 +3,7 @@ package com.luuzr.jielv.data.settings
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
@@ -51,6 +52,9 @@ class SettingsRepositoryImpl @Inject constructor(
         return ReminderPreferences(
             defaultTaskRepeatIntervalMinutes = preferences[defaultTaskRepeatIntervalKey] ?: 60,
             defaultHabitRepeatIntervalMinutes = preferences[defaultHabitRepeatIntervalKey] ?: 60,
+            showCompletedTasks = preferences[showCompletedTasksKey] ?: false,
+            showOnlyTodayHabits = preferences[showOnlyTodayHabitsKey] ?: false,
+            showDeletedHabits = preferences[showDeletedHabitsKey] ?: false,
             settingsUpdatedAt = preferences[settingsUpdatedAtKey] ?: 0L,
         )
     }
@@ -61,12 +65,18 @@ class SettingsRepositoryImpl @Inject constructor(
     ) {
         mutablePreferences[defaultTaskRepeatIntervalKey] = preferences.defaultTaskRepeatIntervalMinutes
         mutablePreferences[defaultHabitRepeatIntervalKey] = preferences.defaultHabitRepeatIntervalMinutes
+        mutablePreferences[showCompletedTasksKey] = preferences.showCompletedTasks
+        mutablePreferences[showOnlyTodayHabitsKey] = preferences.showOnlyTodayHabits
+        mutablePreferences[showDeletedHabitsKey] = preferences.showDeletedHabits
         mutablePreferences[settingsUpdatedAtKey] = preferences.settingsUpdatedAt
     }
 
     private companion object {
         val defaultTaskRepeatIntervalKey = intPreferencesKey("default_task_repeat_interval_minutes")
         val defaultHabitRepeatIntervalKey = intPreferencesKey("default_habit_repeat_interval_minutes")
+        val showCompletedTasksKey = booleanPreferencesKey("show_completed_tasks")
+        val showOnlyTodayHabitsKey = booleanPreferencesKey("show_only_today_habits")
+        val showDeletedHabitsKey = booleanPreferencesKey("show_deleted_habits")
         val settingsUpdatedAtKey = longPreferencesKey("settings_updated_at")
     }
 }

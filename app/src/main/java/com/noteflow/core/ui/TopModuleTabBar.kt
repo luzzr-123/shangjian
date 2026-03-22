@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -52,13 +54,13 @@ fun TopModuleTabBar(
         val tabCount = destinations.size.coerceAtLeast(1)
         val normalizedSelectionPosition = selectionPosition.coerceIn(0f, (tabCount - 1).toFloat())
         val slotWidth = maxWidth / tabCount
-        val highlightWidth = slotWidth - 10.dp
-        val highlightOffset = slotWidth * normalizedSelectionPosition + 5.dp
+        val highlightWidth = slotWidth - 12.dp
+        val highlightOffset = slotWidth * normalizedSelectionPosition + 6.dp
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(70.dp)
+                .height(74.dp)
                 .clip(RoundedCornerShape(32.dp))
                 .background(NoteFlowGlassSurface.copy(alpha = 0.56f))
                 .drawWithCache {
@@ -84,8 +86,8 @@ fun TopModuleTabBar(
         ) {
             TopTabHighlight(
                 modifier = Modifier
-                    .offset(x = highlightOffset, y = 7.dp)
-                    .height(56.dp),
+                    .offset(x = highlightOffset, y = 8.dp)
+                    .height(58.dp),
                 width = highlightWidth,
                 style = motionStyle,
             )
@@ -101,7 +103,7 @@ fun TopModuleTabBar(
                     Box(
                         modifier = Modifier
                             .weight(1f)
-                            .height(70.dp)
+                            .height(74.dp)
                             .noteFlowPressScale(interactionSource = interactionSource)
                             .graphicsLayer {
                                 val scale = 0.96f + (selectionProgress * 0.04f)
@@ -117,15 +119,33 @@ fun TopModuleTabBar(
                             .testTag("nav_${destination.route}"),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(
-                            text = destination.label,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = lerp(
-                                start = NoteFlowTextTertiary,
-                                stop = MaterialTheme.colorScheme.onPrimary,
-                                fraction = selectionProgress,
-                            ),
-                        )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Icon(
+                                imageVector = if (selectionProgress > 0.55f) {
+                                    destination.selectedIcon
+                                } else {
+                                    destination.unselectedIcon
+                                },
+                                contentDescription = null,
+                                tint = lerp(
+                                    start = NoteFlowTextSecondary,
+                                    stop = MaterialTheme.colorScheme.onPrimary,
+                                    fraction = selectionProgress,
+                                ),
+                            )
+                            Text(
+                                text = destination.label,
+                                style = MaterialTheme.typography.labelLarge,
+                                color = lerp(
+                                    start = NoteFlowTextTertiary,
+                                    stop = MaterialTheme.colorScheme.onPrimary,
+                                    fraction = selectionProgress,
+                                ),
+                            )
+                        }
                     }
                 }
             }
@@ -145,7 +165,7 @@ private fun TopTabHighlight(
             .drawWithCache {
                 val topGlow = Brush.verticalGradient(
                     colors = listOf(
-                        Color.White.copy(alpha = 0.14f),
+                        Color.White.copy(alpha = 0.18f),
                         Color.Transparent,
                     ),
                 )
@@ -160,13 +180,13 @@ private fun TopTabHighlight(
                 )
                 val bodyGradient = Brush.verticalGradient(
                     colors = listOf(
-                        style.accentGlowColor.copy(alpha = 0.66f),
-                        style.accentColor.copy(alpha = 0.82f),
+                        style.accentGlowColor.copy(alpha = 0.72f),
+                        style.accentColor.copy(alpha = 0.88f),
                     ),
                 )
                 onDrawBehind {
                     drawRoundRect(
-                        color = style.accentColor.copy(alpha = 0.22f),
+                        color = style.accentColor.copy(alpha = 0.20f),
                         cornerRadius = androidx.compose.ui.geometry.CornerRadius(size.height / 2f, size.height / 2f),
                     )
                     drawRoundRect(
@@ -182,7 +202,7 @@ private fun TopTabHighlight(
                         cornerRadius = androidx.compose.ui.geometry.CornerRadius(size.height / 2f, size.height / 2f),
                     )
                     drawRoundRect(
-                        color = Color.White.copy(alpha = 0.12f),
+                        color = Color.White.copy(alpha = 0.14f),
                         cornerRadius = androidx.compose.ui.geometry.CornerRadius(size.height / 2f, size.height / 2f),
                         style = Stroke(width = 1.dp.toPx()),
                     )

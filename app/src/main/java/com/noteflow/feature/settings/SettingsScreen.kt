@@ -40,6 +40,7 @@ import com.luuzr.jielv.core.ui.LayoutTokens
 import com.luuzr.jielv.core.ui.NoteFlowPageHeader
 import com.luuzr.jielv.core.ui.StandardFieldRow
 import com.luuzr.jielv.core.ui.StandardSectionCard
+import com.luuzr.jielv.core.ui.StandardSwitchRow
 import com.luuzr.jielv.core.ui.noteFlowButtonColors
 import com.luuzr.jielv.core.ui.noteFlowOutlinedButtonColors
 import com.luuzr.jielv.core.ui.noteFlowOutlinedTextFieldColors
@@ -58,6 +59,9 @@ fun SettingsRoute(
         onNavigateBack = onNavigateBack,
         onTaskDefaultIntervalChanged = viewModel::onTaskDefaultIntervalChanged,
         onHabitDefaultIntervalChanged = viewModel::onHabitDefaultIntervalChanged,
+        onShowCompletedTasksChanged = viewModel::onShowCompletedTasksChanged,
+        onShowOnlyTodayHabitsChanged = viewModel::onShowOnlyTodayHabitsChanged,
+        onShowDeletedHabitsChanged = viewModel::onShowDeletedHabitsChanged,
         onSaveDefaults = viewModel::saveDefaultIntervals,
         onOpenNotificationSettings = {
             context.startActivity(
@@ -77,11 +81,25 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onTaskDefaultIntervalChanged: (String) -> Unit,
     onHabitDefaultIntervalChanged: (String) -> Unit,
+    onShowCompletedTasksChanged: (Boolean) -> Unit,
+    onShowOnlyTodayHabitsChanged: (Boolean) -> Unit,
+    onShowDeletedHabitsChanged: (Boolean) -> Unit,
     onSaveDefaults: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
     onOpenTrash: () -> Unit,
     onOpenBackup: () -> Unit,
 ) {
+    val saveButtonLabel = when {
+        uiState.isSaving -> "保存中"
+        uiState.hasPendingChanges -> "保存界面与提醒配置"
+        else -> "当前已同步"
+    }
+    val saveHint = if (uiState.hasPendingChanges) {
+        "有未保存的界面配置，保存后会立即同步到待办区和习惯区的显示逻辑。"
+    } else {
+        "当前配置已同步，列表页会直接按这里的设置显示。"
+    }
+
     Scaffold(containerColor = Color.Transparent) { innerPadding ->
         Column(
             modifier = Modifier
@@ -105,7 +123,7 @@ fun SettingsScreen(
             }
             NoteFlowPageHeader(
                 title = uiState.title,
-                subtitle = "管理提醒偏好和数据工具。",
+                subtitle = "统一管理提醒节奏、列表显示和数据工具。",
             )
 
             if (uiState.isLoading) {
@@ -114,6 +132,7 @@ fun SettingsScreen(
 
             StandardSectionCard(
                 title = "提醒偏好",
+                subtitle = "这些配置会同时作用于任务、习惯和今日页的提醒节奏。",
                 accentColor = NoteFlowTodayAccent,
             ) {
                 StandardFieldRow(label = "任务默认重复提醒间隔（分钟）") {
@@ -158,6 +177,50 @@ fun SettingsScreen(
                         Text("系统设置")
                     }
                 }
+            }
+
+            StandardSectionCard(
+                title = "显示偏好",
+                subtitle = "列表筛选统一收拢到这里，不再占用待办区和习惯区顶部空间。",
+                accentColor = NoteFlowTodayAccent,
+            ) {
+                StandardSwitchRow(
+                    title = "待办显示已完成任务",
+                    description = "开启后，待办列表会保留已完成任务。",
+                    checked = uiState.showCompletedTasks,
+                    onCheckedChange = onShowCompletedTasksChanged,
+                    enabled = !uiState.isSaving,
+                    modifier = Modifier.testTag("settings_show_completed_tasks"),
+                )
+                StandardSwitchRow(
+                    title = "习惯仅看今日应执行",
+                    description = "只显示今天命中频率规则的习惯，已完成项仍保留显示。",
+                    checked = uiState.showOnlyTodayHabits,
+                    onCheckedChange = onShowOnlyTodayHabitsChanged,
+                    enabled = !uiState.isSaving,
+                    modifier = Modifier.testTag("settings_show_today_habits"),
+                )
+                StandardSwitchRow(
+                    title = "习惯显示已删除",
+                    description = "在习惯列表中显示已软删除项，便于恢复。",
+                    checked = uiState.showDeletedHabits,
+                    onCheckedChange = onShowDeletedHabitsChanged,
+                    enabled = !uiState.isSaving,
+                    modifier = Modifier.testTag("settings_show_deleted_habits"),
+                )
+            }
+
+            StandardSectionCard(
+                title = "配置同步",
+                subtitle = "只在有变更时保存，避免重复操作。",
+                accentColor = NoteFlowTodayAccent,
+            ) {
+                Text(
+                    text = saveHint,
+                    modifier = Modifier.testTag("settings_save_hint"),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 uiState.defaultsError?.let {
                     Text(
                         text = it,
@@ -169,11 +232,27 @@ fun SettingsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("settings_save_defaults"),
-                    enabled = !uiState.isSaving,
+                    enabled = uiState.hasPendingChanges && !uiState.isSaving && !uiState.isLoading,
                     onClick = onSaveDefaults,
                     colors = noteFlowButtonColors(NoteFlowTodayAccent),
                 ) {
-                    Text(if (uiState.isSaving) "保存中" else "保存提醒偏好")
+                    Text(saveButtonLabel)
+                }
+                uiState.errorMessage?.let {
+                    Text(
+                        text = it,
+                        modifier = Modifier.testTag("settings_error"),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+                uiState.resultMessage?.let {
+                    Text(
+                        text = it,
+                        modifier = Modifier.testTag("settings_result"),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
 
@@ -201,23 +280,6 @@ fun SettingsScreen(
                 ) {
                     Text("备份与恢复")
                 }
-            }
-
-            uiState.errorMessage?.let {
-                Text(
-                    text = it,
-                    modifier = Modifier.testTag("settings_error"),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error,
-                )
-            }
-            uiState.resultMessage?.let {
-                Text(
-                    text = it,
-                    modifier = Modifier.testTag("settings_result"),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
             }
         }
     }

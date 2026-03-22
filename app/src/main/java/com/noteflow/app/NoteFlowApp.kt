@@ -69,10 +69,10 @@ fun NoteFlowApp(
         ),
         label = "module_overlay_color",
     )
-    val targetOverlayAlpha = if (isTopLevelRoute) 0.008f else 0.018f
-    val targetAmbientAlpha = if (isTopLevelRoute) 0.030f else 0.050f
-    val targetTopGlowAlpha = if (isTopLevelRoute) 0.06f else 0.24f
-    val targetLowerGlowAlpha = if (isTopLevelRoute) 0.02f else 0.12f
+    val targetOverlayAlpha = if (isTopLevelRoute) 0.004f else 0.010f
+    val targetAmbientAlpha = if (isTopLevelRoute) 0.018f else 0.030f
+    val targetTopGlowAlpha = if (isTopLevelRoute) 0.040f else 0.140f
+    val targetLowerGlowAlpha = if (isTopLevelRoute) 0.010f else 0.055f
     val overlayAlpha by animateFloatAsState(
         targetValue = targetOverlayAlpha,
         animationSpec = MotionTokens.SpringSmooth,
@@ -127,16 +127,16 @@ fun NoteFlowApp(
                             animatedAmbientColor.copy(alpha = topGlowAlpha),
                             Color.Transparent,
                         ),
-                        center = Offset(size.width * 0.48f, size.height * 0.04f),
-                        radius = size.width * 0.86f,
+                        center = Offset(size.width * 0.46f, size.height * 0.03f),
+                        radius = size.width * 0.74f,
                     )
                     val lowerGlow = Brush.radialGradient(
                         colors = listOf(
                             currentVisualStyle.glassTintColor.copy(alpha = lowerGlowAlpha),
                             Color.Transparent,
                         ),
-                        center = Offset(size.width * 0.94f, size.height * 0.92f),
-                        radius = size.width * 0.56f,
+                        center = Offset(size.width * 0.92f, size.height * 0.88f),
+                        radius = size.width * 0.42f,
                     )
                     onDrawBehind {
                         drawRect(baseLayer)

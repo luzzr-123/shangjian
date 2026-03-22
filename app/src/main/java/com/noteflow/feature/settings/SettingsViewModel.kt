@@ -28,6 +28,7 @@ class SettingsViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(SettingsUiState(isLoading = true))
     val uiState = _uiState.asStateFlow()
+    private var persistedPreferences: ReminderPreferences? = null
 
     init {
         viewModelScope.launch {
@@ -42,13 +43,19 @@ class SettingsViewModel @Inject constructor(
                     }
                 }
                 .collect { preferences ->
+                    persistedPreferences = preferences
                     _uiState.update { current ->
                         current.copy(
                             defaultTaskRepeatIntervalText = preferences.defaultTaskRepeatIntervalMinutes.toString(),
                             defaultHabitRepeatIntervalText = preferences.defaultHabitRepeatIntervalMinutes.toString(),
+                            showCompletedTasks = preferences.showCompletedTasks,
+                            showOnlyTodayHabits = preferences.showOnlyTodayHabits,
+                            showDeletedHabits = preferences.showDeletedHabits,
+                            hasPendingChanges = false,
                             notificationPermissionGranted = notificationPermissionChecker.canPostNotifications(),
                             isLoading = false,
                             isSaving = false,
+                            defaultsError = null,
                         )
                     }
                 }
@@ -56,28 +63,56 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun onTaskDefaultIntervalChanged(value: String) {
-        _uiState.update {
-            it.copy(
+        updateEditableState {
+            copy(
                 defaultTaskRepeatIntervalText = value.filter(Char::isDigit),
-                defaultsError = null,
-                errorMessage = null,
-                resultMessage = null,
             )
         }
     }
 
     fun onHabitDefaultIntervalChanged(value: String) {
-        _uiState.update {
-            it.copy(
+        updateEditableState {
+            copy(
                 defaultHabitRepeatIntervalText = value.filter(Char::isDigit),
-                defaultsError = null,
-                errorMessage = null,
-                resultMessage = null,
+            )
+        }
+    }
+
+    fun onShowCompletedTasksChanged(checked: Boolean) {
+        updateEditableState {
+            copy(
+                showCompletedTasks = checked,
+            )
+        }
+    }
+
+    fun onShowOnlyTodayHabitsChanged(checked: Boolean) {
+        updateEditableState {
+            copy(
+                showOnlyTodayHabits = checked,
+            )
+        }
+    }
+
+    fun onShowDeletedHabitsChanged(checked: Boolean) {
+        updateEditableState {
+            copy(
+                showDeletedHabits = checked,
             )
         }
     }
 
     fun saveDefaultIntervals() {
+        if (!uiState.value.hasPendingChanges) {
+            _uiState.update {
+                it.copy(
+                    defaultsError = null,
+                    errorMessage = null,
+                    resultMessage = "当前配置已同步，无需重复保存。",
+                )
+            }
+            return
+        }
         val taskMinutes = uiState.value.defaultTaskRepeatIntervalText.toIntOrNull()
         val habitMinutes = uiState.value.defaultHabitRepeatIntervalText.toIntOrNull()
         if (taskMinutes == null || taskMinutes <= 0 || habitMinutes == null || habitMinutes <= 0) {
@@ -90,13 +125,36 @@ class SettingsViewModel @Inject constructor(
             }
             return
         }
-        updatePreferences(successMessage = "提醒偏好已保存。") {
+        updatePreferences(successMessage = "提醒与显示偏好已保存。") {
             it.copy(
                 defaultTaskRepeatIntervalMinutes = taskMinutes,
                 defaultHabitRepeatIntervalMinutes = habitMinutes,
+                showCompletedTasks = uiState.value.showCompletedTasks,
+                showOnlyTodayHabits = uiState.value.showOnlyTodayHabits,
+                showDeletedHabits = uiState.value.showDeletedHabits,
                 settingsUpdatedAt = timeProvider.nowMillis(),
             )
         }
+    }
+
+    private fun updateEditableState(transform: SettingsUiState.() -> SettingsUiState) {
+        _uiState.update { current ->
+            val updatedState = current.transform().copy(
+                defaultsError = null,
+                errorMessage = null,
+                resultMessage = null,
+            )
+            updatedState.copy(hasPendingChanges = hasPendingChanges(updatedState))
+        }
+    }
+
+    private fun hasPendingChanges(state: SettingsUiState): Boolean {
+        val baseline = persistedPreferences ?: return false
+        return state.defaultTaskRepeatIntervalText != baseline.defaultTaskRepeatIntervalMinutes.toString() ||
+            state.defaultHabitRepeatIntervalText != baseline.defaultHabitRepeatIntervalMinutes.toString() ||
+            state.showCompletedTasks != baseline.showCompletedTasks ||
+            state.showOnlyTodayHabits != baseline.showOnlyTodayHabits ||
+            state.showDeletedHabits != baseline.showDeletedHabits
     }
 
     private fun updatePreferences(
@@ -119,6 +177,7 @@ class SettingsViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isSaving = false,
+                        hasPendingChanges = false,
                         defaultsError = null,
                         errorMessage = null,
                         resultMessage = successMessage,

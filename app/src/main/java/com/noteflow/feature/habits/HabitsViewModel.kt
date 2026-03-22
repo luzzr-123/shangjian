@@ -10,16 +10,15 @@ import com.luuzr.jielv.domain.usecase.CheckInPolicy
 import com.luuzr.jielv.domain.usecase.CompleteCheckHabitUseCase
 import com.luuzr.jielv.domain.usecase.HabitQuickActionType
 import com.luuzr.jielv.domain.usecase.HabitScheduleEvaluator
+import com.luuzr.jielv.domain.usecase.ObserveReminderPreferencesUseCase
 import com.luuzr.jielv.domain.usecase.ObserveHabitsUseCase
 import com.luuzr.jielv.domain.usecase.RestoreHabitUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Instant
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -28,6 +27,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 @OptIn(ExperimentalCoroutinesApi::class)
 class HabitsViewModel @Inject constructor(
+    observeReminderPreferencesUseCase: ObserveReminderPreferencesUseCase,
     private val observeHabitsUseCase: ObserveHabitsUseCase,
     private val completeCheckHabitUseCase: CompleteCheckHabitUseCase,
     private val restoreHabitUseCase: RestoreHabitUseCase,
@@ -36,12 +36,8 @@ class HabitsViewModel @Inject constructor(
     private val timeProvider: TimeProvider,
 ) : ViewModel() {
 
-    private val todayOnly = MutableStateFlow(false)
-    private val showDeleted = MutableStateFlow(false)
-
-    val uiState: StateFlow<HabitsUiState> = combine(todayOnly, showDeleted) { onlyToday, deleted ->
-        onlyToday to deleted
-    }
+    val uiState: StateFlow<HabitsUiState> = observeReminderPreferencesUseCase()
+        .map { preferences -> preferences.showOnlyTodayHabits to preferences.showDeletedHabits }
         .flatMapLatest { (onlyToday, deleted) ->
             observeHabitsUseCase(
                 recordDate = todayEpochDay(),
@@ -89,14 +85,6 @@ class HabitsViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = HabitsUiState(),
         )
-
-    fun onTodayOnlyChanged(checked: Boolean) {
-        todayOnly.value = checked
-    }
-
-    fun onShowDeletedChanged(checked: Boolean) {
-        showDeleted.value = checked
-    }
 
     fun onQuickCheckHabit(habitId: String) {
         viewModelScope.launch {

@@ -18,15 +18,21 @@ class NavigationSmokeTest {
         assertTagExists("today_summary_card")
 
         composeRule.onNodeWithTag("nav_tasks").performClick()
-        assertTagExists("show_completed_switch")
+        assertTagExists("tasks_fab")
 
         composeRule.onNodeWithTag("nav_habits").performClick()
-        assertTagExists("show_today_habits_switch")
+        assertTagExists("habits_fab")
 
         composeRule.onNodeWithTag("nav_notes").performClick()
         assertTagExists("notes_fab")
 
         composeRule.onNodeWithTag("nav_today").performClick()
+        composeRule.onNodeWithTag("open_settings").performClick()
+        assertTagExists("settings_show_completed_tasks")
+        assertTagExists("settings_show_today_habits")
+        assertTagExists("settings_show_deleted_habits")
+
+        composeRule.onNodeWithTag("settings_back").performClick()
         assertTagExists("today_summary_card")
     }
 
@@ -37,4 +43,3 @@ class NavigationSmokeTest {
         assertTrue(composeRule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty())
     }
 }
-

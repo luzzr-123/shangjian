@@ -2,15 +2,18 @@ package com.luuzr.jielv.feature.habits
 
 import com.luuzr.jielv.MainDispatcherRule
 import com.luuzr.jielv.core.time.TimeProvider
+import com.luuzr.jielv.data.settings.ReminderPreferences
 import com.luuzr.jielv.domain.model.Habit
 import com.luuzr.jielv.domain.model.HabitCheckInMode
 import com.luuzr.jielv.domain.model.HabitFrequencyType
 import com.luuzr.jielv.domain.model.HabitRecord
 import com.luuzr.jielv.domain.model.HabitRecordStatus
 import com.luuzr.jielv.domain.repository.HabitRepository
+import com.luuzr.jielv.domain.repository.SettingsRepository
 import com.luuzr.jielv.domain.usecase.CompleteCheckHabitUseCase
 import com.luuzr.jielv.domain.usecase.CheckInPolicy
 import com.luuzr.jielv.domain.usecase.HabitScheduleEvaluator
+import com.luuzr.jielv.domain.usecase.ObserveReminderPreferencesUseCase
 import com.luuzr.jielv.domain.usecase.ObserveHabitsUseCase
 import com.luuzr.jielv.domain.usecase.RestoreHabitUseCase
 import java.time.DayOfWeek
@@ -37,6 +40,7 @@ class HabitsViewModelTest {
     @Test
     fun todayOnlyFiltersHabitsAndDeletedListCanBeShown() = runTest {
         val repository = FakeHabitRepository()
+        val settingsRepository = FakeSettingsRepository()
         repository.habits.value = listOf(
             habit(id = "daily", title = "Daily", frequencyType = HabitFrequencyType.DAILY),
             habit(
@@ -54,6 +58,7 @@ class HabitsViewModelTest {
         )
 
         val viewModel = HabitsViewModel(
+            observeReminderPreferencesUseCase = ObserveReminderPreferencesUseCase(settingsRepository),
             observeHabitsUseCase = ObserveHabitsUseCase(repository),
             completeCheckHabitUseCase = CompleteCheckHabitUseCase(repository),
             restoreHabitUseCase = RestoreHabitUseCase(repository),
@@ -68,12 +73,12 @@ class HabitsViewModelTest {
         advanceUntilIdle()
         assertEquals(listOf("Daily", "Weekly"), viewModel.uiState.value.activeHabits.map { it.title })
 
-        viewModel.onTodayOnlyChanged(true)
+        settingsRepository.state.value = settingsRepository.state.value.copy(showOnlyTodayHabits = true)
         advanceUntilIdle()
 
         assertEquals(listOf("Daily"), viewModel.uiState.value.activeHabits.map { it.title })
 
-        viewModel.onShowDeletedChanged(true)
+        settingsRepository.state.value = settingsRepository.state.value.copy(showDeletedHabits = true)
         advanceUntilIdle()
 
         assertEquals(listOf("Deleted"), viewModel.uiState.value.deletedHabits.map { it.title })
@@ -84,10 +89,12 @@ class HabitsViewModelTest {
     @Test
     fun quickCheckMarksCheckHabitAsCompleted() = runTest {
         val repository = FakeHabitRepository()
+        val settingsRepository = FakeSettingsRepository()
         repository.habits.value = listOf(
             habit(id = "habit-1", title = "Walk", frequencyType = HabitFrequencyType.DAILY),
         )
         val viewModel = HabitsViewModel(
+            observeReminderPreferencesUseCase = ObserveReminderPreferencesUseCase(settingsRepository),
             observeHabitsUseCase = ObserveHabitsUseCase(repository),
             completeCheckHabitUseCase = CompleteCheckHabitUseCase(repository),
             restoreHabitUseCase = RestoreHabitUseCase(repository),
@@ -168,6 +175,22 @@ class HabitsViewModelTest {
         override suspend fun completeStepsHabit(habitId: String, recordDate: Long) = Unit
 
         override suspend fun completeDurationHabit(habitId: String, recordDate: Long, durationMinutes: Int) = Unit
+    }
+
+    private class FakeSettingsRepository : SettingsRepository {
+        val state = MutableStateFlow(ReminderPreferences())
+
+        override fun observeReminderPreferences(): Flow<ReminderPreferences> = state
+
+        override suspend fun getReminderPreferences(): ReminderPreferences = state.value
+
+        override suspend fun updateReminderPreferences(transform: (ReminderPreferences) -> ReminderPreferences) {
+            state.value = transform(state.value)
+        }
+
+        override suspend fun replaceReminderPreferences(preferences: ReminderPreferences) {
+            state.value = preferences
+        }
     }
 
     private fun habit(

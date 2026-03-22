@@ -99,16 +99,16 @@ fun TopLevelCanvasRoute(
             .drawWithCache {
                 val canvasGlow = Brush.radialGradient(
                     colors = listOf(
-                        motionStyle.ambientColor.copy(alpha = 0.16f),
+                        motionStyle.ambientColor.copy(alpha = 0.10f),
                         Color.Transparent,
                     ),
                     center = Offset(size.width * 0.46f, size.height * 0.08f),
-                    radius = size.width * 0.80f,
+                    radius = size.width * 0.68f,
                 )
                 onDrawBehind {
                     drawRect(canvasGlow)
-                    drawRect(motionStyle.overlayColor.copy(alpha = 0.010f))
-                    drawRect(NoteFlowOverlayAmbient.copy(alpha = 0.016f))
+                    drawRect(motionStyle.overlayColor.copy(alpha = 0.004f))
+                    drawRect(NoteFlowOverlayAmbient.copy(alpha = 0.010f))
                 }
             },
     ) {

@@ -8,6 +8,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -39,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.testTag
@@ -50,10 +53,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luuzr.jielv.core.designsystem.theme.NoteFlowHabitAccent
 import com.luuzr.jielv.core.designsystem.theme.NoteFlowHabitAccentSoft
+import com.luuzr.jielv.core.designsystem.theme.NoteFlowOutlineSoft
 import com.luuzr.jielv.core.designsystem.theme.NoteFlowTaskAccent
 import com.luuzr.jielv.core.designsystem.theme.NoteFlowTaskAccentSoft
 import com.luuzr.jielv.core.designsystem.theme.NoteFlowTextSecondary
+import com.luuzr.jielv.core.designsystem.theme.NoteFlowTextTertiary
 import com.luuzr.jielv.core.designsystem.theme.NoteFlowTodayAccent
+import com.luuzr.jielv.core.designsystem.theme.NoteFlowTodayAccentSoft
+import com.luuzr.jielv.core.designsystem.theme.NoteFlowSurfaceVariant
 import com.luuzr.jielv.core.ui.GlassLevel
 import com.luuzr.jielv.core.ui.GlassSurface
 import com.luuzr.jielv.core.ui.LocalRadialExpansionController
@@ -65,13 +72,14 @@ import com.luuzr.jielv.core.ui.noteFlowPressScale
 import com.luuzr.jielv.core.ui.rememberPressInteractionSource
 import com.luuzr.jielv.domain.usecase.HabitQuickActionType
 import com.luuzr.jielv.domain.usecase.TaskQuickActionType
+import com.luuzr.jielv.feature.settings.TopLevelSettingsButton
 
 internal data class TodayCompactLayoutSpec(
     val columnGap: Dp,
     val sectionGap: Dp,
     val cardGap: Dp,
     val cardPadding: Dp,
-    val cardHeight: Dp,
+    val cardMinHeight: Dp,
     val emptyCardMinHeight: Dp,
     val controlHeight: Dp,
     val actionWidth: Dp,
@@ -91,7 +99,7 @@ internal fun rememberTodayCompactLayoutSpec(totalWidth: Dp): TodayCompactLayoutS
             sectionGap = 8.dp,
             cardGap = 8.dp,
             cardPadding = 12.dp,
-            cardHeight = 88.dp,
+            cardMinHeight = 110.dp,
             emptyCardMinHeight = 160.dp,
             controlHeight = 30.dp,
             actionWidth = 62.dp,
@@ -105,11 +113,11 @@ internal fun rememberTodayCompactLayoutSpec(totalWidth: Dp): TodayCompactLayoutS
             columnGap = 12.dp,
             sectionGap = 10.dp,
             cardGap = 10.dp,
-            cardPadding = 14.dp,
-            cardHeight = 96.dp,
+            cardPadding = 16.dp,
+            cardMinHeight = 118.dp,
             emptyCardMinHeight = 176.dp,
-            controlHeight = 32.dp,
-            actionWidth = 68.dp,
+            controlHeight = 34.dp,
+            actionWidth = 72.dp,
             sectionTitleStyle = typography.titleMedium,
             cardTitleStyle = typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
             actionStyle = typography.labelMedium,
@@ -119,8 +127,11 @@ internal fun rememberTodayCompactLayoutSpec(totalWidth: Dp): TodayCompactLayoutS
 }
 
 @Composable
-fun TodaySummaryCard(
+fun TodayHeroCard(
+    title: String,
+    dateLine: String,
     summary: TodaySummaryUiModel,
+    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     GlassSurface(
@@ -128,86 +139,46 @@ fun TodaySummaryCard(
             .fillMaxWidth()
             .testTag("today_summary_card"),
         accentColor = NoteFlowTodayAccent,
-        level = GlassLevel.Weak,
+        level = GlassLevel.Normal,
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Text(
-                text = "今日概览",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("today_summary_grid"),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                TodayMetricCell(
+                Column(
                     modifier = Modifier.weight(1f),
-                    label = "待办",
-                    value = summary.pendingTaskCount.toString(),
-                    accentColor = NoteFlowTaskAccent,
-                    testTag = "today_summary_pending_tasks",
-                )
-                TodayMetricCell(
-                    modifier = Modifier.weight(1f),
-                    label = "习惯",
-                    value = summary.dueHabitCount.toString(),
-                    accentColor = NoteFlowHabitAccent,
-                    testTag = "today_summary_due_habits",
-                )
-                TodayMetricCell(
-                    modifier = Modifier.weight(1f),
-                    label = "已完成",
-                    value = summary.completedCount.toString(),
-                    accentColor = NoteFlowTodayAccent,
-                    testTag = "today_summary_completed",
-                )
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        text = "$dateLine · ${todaySummaryHeadline(summary)}",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                TopLevelSettingsButton(onClick = onOpenSettings)
             }
+            TodayStatusPills(summary = summary)
+            TodayCompletionBar(summary = summary)
         }
-    }
-}
-
-@Composable
-private fun TodayMetricCell(
-    modifier: Modifier = Modifier,
-    label: String,
-    value: String,
-    accentColor: Color,
-    testTag: String,
-) {
-    Column(
-        modifier = modifier
-            .heightIn(min = 60.dp)
-            .testTag(testTag),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = accentColor,
-            maxLines = 1,
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = NoteFlowTextSecondary,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
     }
 }
 
 @Composable
 internal fun TodaySectionHeader(
     title: String,
+    count: Int,
     actionLabel: String,
     testTag: String,
     layoutSpec: TodayCompactLayoutSpec,
@@ -218,14 +189,20 @@ internal fun TodaySectionHeader(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = title,
+        Row(
             modifier = Modifier.weight(1f),
-            style = layoutSpec.sectionTitleStyle,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = title,
+                style = layoutSpec.sectionTitleStyle,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            TodaySectionCountPill(count = count)
+        }
         TextButton(
             modifier = Modifier
                 .defaultMinSize(minWidth = 0.dp, minHeight = 0.dp)
@@ -351,47 +328,78 @@ private fun TodayQuickCard(
             .noteFlowPressScale(interactionSource = interactionSource),
         accentColor = accentColor,
         level = GlassLevel.Normal,
+        shape = RoundedCornerShape(28.dp),
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(layoutSpec.cardHeight)
-                .padding(horizontal = layoutSpec.cardPadding, vertical = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalAlignment = Alignment.CenterVertically,
+                .heightIn(min = layoutSpec.cardMinHeight)
+                .padding(horizontal = layoutSpec.cardPadding, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = title,
-                    style = layoutSpec.cardTitleStyle,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                if (!subtitle.isNullOrBlank()) {
+                TodayCardLeadingAccent(accentColor = accentColor)
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
                     Text(
-                        text = subtitle,
-                        style = layoutSpec.supportStyle,
-                        color = subtitleColor,
-                        maxLines = 1,
+                        text = title,
+                        style = layoutSpec.cardTitleStyle,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
-                }
-                if (!support.isNullOrBlank()) {
-                    Text(
-                        text = support,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                    if (!subtitle.isNullOrBlank()) {
+                        Text(
+                            text = subtitle,
+                            style = layoutSpec.supportStyle,
+                            color = subtitleColor,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    if (!support.isNullOrBlank()) {
+                        Text(
+                            text = support,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
             }
-            action()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
+                content = action,
+            )
         }
+    }
+}
+
+@Composable
+private fun TodayCardLeadingAccent(
+    accentColor: Color,
+    modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(999.dp),
+) {
+    Box(
+        modifier = modifier
+            .background(accentColor.copy(alpha = 0.12f), shape)
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .background(accentColor, CircleShape)
+                .widthIn(min = 6.dp)
+                .height(6.dp),
+        )
     }
 }
 
@@ -443,21 +451,22 @@ internal fun TodayEmptySectionCard(
             .testTag("${actionTestTag}_card"),
         accentColor = accentColor,
         level = GlassLevel.Normal,
+        shape = RoundedCornerShape(28.dp),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(layoutSpec.cardPadding),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            TodayCardLeadingAccent(accentColor = accentColor)
             Text(
                 text = title,
                 style = layoutSpec.cardTitleStyle,
                 color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
             )
             Text(
                 text = description,
@@ -465,11 +474,10 @@ internal fun TodayEmptySectionCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
             )
             OutlinedButton(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .widthIn(min = 120.dp)
                     .height(layoutSpec.controlHeight + 4.dp)
                     .testTag(actionTestTag),
                 onClick = onActionClick,
@@ -544,6 +552,163 @@ fun TodayGlobalEmptyCard(
             }
         }
     }
+}
+
+@Composable
+private fun TodayStatusPills(summary: TodaySummaryUiModel) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("today_summary_grid"),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        TodayStatusPill(
+            modifier = Modifier.weight(1f),
+            label = "待办",
+            value = summary.pendingTaskCount.toString(),
+            accentColor = NoteFlowTaskAccent,
+        )
+        TodayStatusPill(
+            modifier = Modifier.weight(1f),
+            label = "习惯",
+            value = summary.dueHabitCount.toString(),
+            accentColor = NoteFlowHabitAccent,
+        )
+        TodayStatusPill(
+            modifier = Modifier.weight(1f),
+            label = "完成",
+            value = summary.completedCount.toString(),
+            accentColor = NoteFlowTodayAccent,
+        )
+    }
+}
+
+@Composable
+private fun TodayStatusPill(
+    label: String,
+    value: String,
+    accentColor: Color,
+    modifier: Modifier = Modifier,
+) {
+    GlassSurface(
+        modifier = modifier,
+        accentColor = accentColor,
+        level = GlassLevel.Weak,
+        shape = RoundedCornerShape(18.dp),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .background(accentColor.copy(alpha = 0.14f), CircleShape)
+                    .padding(5.dp),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .background(accentColor, CircleShape)
+                        .padding(3.dp),
+                )
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = NoteFlowTextTertiary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TodayCompletionBar(summary: TodaySummaryUiModel) {
+    val progress = remember(summary) {
+        val total = summary.pendingTaskCount + summary.dueHabitCount + summary.completedCount
+        if (total == 0) 0f else summary.completedCount / total.toFloat()
+    }
+    val clampedProgress = progress.coerceIn(0f, 1f)
+    val completedPercent = (clampedProgress * 100).toInt()
+    val remainingItems = todayActiveItemCount(summary)
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "完成 $completedPercent%",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = if (remainingItems == 0) "当前已清空" else "剩余 $remainingItems 项",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .background(
+                    color = NoteFlowSurfaceVariant,
+                    shape = RoundedCornerShape(999.dp),
+                ),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(if (clampedProgress == 0f) 0f else clampedProgress.coerceAtLeast(0.06f))
+                    .height(6.dp)
+                    .background(
+                        color = NoteFlowTodayAccent.copy(alpha = 0.86f),
+                        shape = RoundedCornerShape(999.dp),
+                    ),
+            )
+        }
+    }
+}
+
+@Composable
+private fun TodaySectionCountPill(count: Int) {
+    Box(
+        modifier = Modifier
+            .background(
+                color = NoteFlowOutlineSoft.copy(alpha = 0.64f),
+                shape = RoundedCornerShape(999.dp),
+            )
+            .padding(horizontal = 10.dp, vertical = 4.dp),
+    ) {
+        Text(
+            text = count.toString(),
+            style = MaterialTheme.typography.labelMedium,
+            color = NoteFlowTextSecondary,
+        )
+    }
+}
+
+private fun todaySummaryHeadline(summary: TodaySummaryUiModel): String {
+    val activeItems = todayActiveItemCount(summary)
+    return when {
+        activeItems == 0 && summary.completedCount == 0 -> "今日暂无安排"
+        activeItems == 0 -> "今日关键项已处理完"
+        activeItems == 1 -> "还有 1 项待推进"
+        else -> "还有 $activeItems 项待推进"
+    }
+}
+
+private fun todayActiveItemCount(summary: TodaySummaryUiModel): Int {
+    return summary.pendingTaskCount + summary.dueHabitCount
 }
 
 @Composable

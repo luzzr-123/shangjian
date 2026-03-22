@@ -39,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -53,9 +54,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luuzr.jielv.core.designsystem.theme.NoteFlowTaskAccent
 import com.luuzr.jielv.core.ui.NoteFlowDateTimeSheet
 import com.luuzr.jielv.core.ui.NoteFlowDateTimeSheetMode
+import com.luuzr.jielv.core.ui.NoteFlowEditorSection
 import com.luuzr.jielv.core.ui.NoteFlowEmptyStateCard
 import com.luuzr.jielv.core.ui.NoteFlowPageHeader
-import com.luuzr.jielv.core.ui.NoteFlowSectionCard
 import com.luuzr.jielv.core.ui.NoteFlowStepBar
 import com.luuzr.jielv.core.ui.NoteFlowStepBottomBar
 import com.luuzr.jielv.core.ui.StandardFieldRow
@@ -261,8 +262,11 @@ fun TaskEditorScreen(
                         .padding(horizontal = 20.dp, vertical = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(18.dp),
                 ) {
-                    TextButton(onClick = onNavigateBack) { Text("返回") }
-                    NoteFlowPageHeader(title = uiState.screenTitle)
+                    TextButton(onClick = onNavigateBack, enabled = !uiState.isSaving) { Text("返回") }
+                    NoteFlowPageHeader(
+                        title = uiState.screenTitle,
+                        subtitle = "先完成主信息，再补充时间和完成方式。",
+                    )
                     NoteFlowStepBar(
                         steps = taskEditorSteps,
                         currentStep = currentStep,
@@ -357,56 +361,66 @@ private fun TaskBasicStep(
     onPrioritySelected: (TaskPriority) -> Unit,
     onUrgentChanged: (Boolean) -> Unit,
 ) {
-    NoteFlowSectionCard(title = "基本信息") {
-        OutlinedTextField(
-            modifier = Modifier.fillMaxWidth().testTag("task_editor_title_input"),
-            value = uiState.title,
-            onValueChange = onTitleChanged,
-            label = { Text("标题") },
-            singleLine = true,
-            isError = uiState.titleError != null,
-            supportingText = { uiState.titleError?.let { Text(it) } },
-            colors = noteFlowOutlinedTextFieldColors(),
-        )
+    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        NoteFlowEditorSection(
+            title = "任务标题与说明",
+            subtitle = "标题负责辨识，正文只补充必要上下文。",
+        ) {
+            OutlinedTextField(
+                modifier = Modifier.fillMaxWidth().testTag("task_editor_title_input"),
+                value = uiState.title,
+                onValueChange = onTitleChanged,
+                label = { Text("标题") },
+                singleLine = true,
+                isError = uiState.titleError != null,
+                supportingText = { uiState.titleError?.let { Text(it) } },
+                colors = noteFlowOutlinedTextFieldColors(),
+            )
 
-        OutlinedTextField(
-            modifier = Modifier.fillMaxWidth().testTag("task_editor_content_input"),
-            value = uiState.contentMarkdown,
-            onValueChange = onContentChanged,
-            label = { Text("正文") },
-            minLines = 5,
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-            colors = noteFlowOutlinedTextFieldColors(),
-        )
-
-        StandardFieldRow(label = "优先级") {
-            ChoiceRow {
-                TaskPriority.entries.forEach { priority ->
-                    FilterChip(
-                        selected = uiState.priority == priority,
-                        onClick = { onPrioritySelected(priority) },
-                        label = {
-                            Text(
-                                when (priority) {
-                                    TaskPriority.NORMAL -> "普通"
-                                    TaskPriority.HIGH -> "高"
-                                    TaskPriority.URGENT -> "紧急"
-                                },
-                            )
-                        },
-                        colors = noteFlowFilterChipColors(NoteFlowTaskAccent),
-                    )
-                }
-            }
+            OutlinedTextField(
+                modifier = Modifier.fillMaxWidth().testTag("task_editor_content_input"),
+                value = uiState.contentMarkdown,
+                onValueChange = onContentChanged,
+                label = { Text("补充说明") },
+                minLines = 5,
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                colors = noteFlowOutlinedTextFieldColors(),
+            )
         }
 
-        StandardSwitchRow(
-            title = "紧急任务",
-            description = "打开后会在列表中优先显示。",
-            checked = uiState.isUrgent,
-            onCheckedChange = onUrgentChanged,
-            accentColor = NoteFlowTaskAccent,
-        )
+        NoteFlowEditorSection(
+            title = "优先级与状态",
+            subtitle = "只保留会影响排序和处理节奏的配置。",
+        ) {
+            StandardFieldRow(label = "优先级") {
+                ChoiceRow {
+                    TaskPriority.entries.forEach { priority ->
+                        FilterChip(
+                            selected = uiState.priority == priority,
+                            onClick = { onPrioritySelected(priority) },
+                            label = {
+                                Text(
+                                    when (priority) {
+                                        TaskPriority.NORMAL -> "普通"
+                                        TaskPriority.HIGH -> "高"
+                                        TaskPriority.URGENT -> "紧急"
+                                    },
+                                )
+                            },
+                            colors = noteFlowFilterChipColors(NoteFlowTaskAccent),
+                        )
+                    }
+                }
+            }
+
+            StandardSwitchRow(
+                title = "紧急任务",
+                description = "打开后会在列表和今日页中更靠前。",
+                checked = uiState.isUrgent,
+                onCheckedChange = onUrgentChanged,
+                accentColor = NoteFlowTaskAccent,
+            )
+        }
     }
 }
 
@@ -427,9 +441,25 @@ private fun TaskScheduleStep(
     onReminderNotificationBodyChanged: (String) -> Unit,
     onShowPicker: (TaskDateTimePickerRequest) -> Unit,
 ) {
-    NoteFlowSectionCard(title = "时间与提醒") {
-        StandardFieldRow(label = "截止时间") {
-            ReadOnlyDateTimeField(label = "截止时间", value = uiState.dueAt.formatWith(formatter), errorMessage = uiState.dueAtError)
+    var showAdvancedReminder by rememberSaveable(uiState.taskId) {
+        mutableStateOf(
+            uiState.repeatIntervalMinutesText.isNotBlank() ||
+                uiState.exactReminderTimes.isNotEmpty() ||
+                uiState.reminderNotificationTitle.isNotBlank() ||
+                uiState.reminderNotificationBody.isNotBlank(),
+        )
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        NoteFlowEditorSection(
+            title = "截止时间",
+            subtitle = "先确定完成时点，再决定提醒强度。",
+        ) {
+            ReadOnlyDateTimeField(
+                label = "截止时间",
+                value = uiState.dueAt.formatWith(formatter),
+                errorMessage = uiState.dueAtError,
+            )
             ChoiceRow {
                 OutlinedButton(
                     onClick = {
@@ -468,126 +498,158 @@ private fun TaskScheduleStep(
             }
         }
 
-        StandardFieldRow(label = "开始提醒时间") {
-            ReadOnlyDateTimeField(label = "开始提醒时间", value = uiState.startReminderMinuteOfDay.toDisplayTime())
-            ChoiceRow {
-                OutlinedButton(
-                    modifier = Modifier.testTag("task_editor_start_reminder_button"),
-                    onClick = {
-                        val initial = uiState.startReminderMinuteOfDay ?: 9 * 60
-                        onShowPicker(
-                            TaskDateTimePickerRequest(
-                                title = "设置开始提醒",
-                                mode = NoteFlowDateTimeSheetMode.TIME_ONLY,
-                                initialDateTime = LocalDate.now(zoneId).atTime(initial / 60, initial % 60),
-                                onConfirm = { selected -> onStartReminderMinuteChanged(selected.hour * 60 + selected.minute) },
-                            ),
-                        )
-                    },
-                    colors = noteFlowOutlinedButtonColors(),
-                ) { Text("设置开始时间") }
-                TextButton(
-                    modifier = Modifier.testTag("task_editor_clear_start_reminder"),
-                    onClick = { onStartReminderMinuteChanged(null) },
-                    enabled = uiState.startReminderMinuteOfDay != null,
-                ) { Text("清除") }
-            }
-        }
-
-        StandardFieldRow(label = "提醒窗口结束时间") {
-            ReadOnlyDateTimeField(label = "提醒窗口结束时间", value = uiState.windowEndMinuteOfDay.toDisplayTime())
-            ChoiceRow {
-                OutlinedButton(
-                    modifier = Modifier.testTag("task_editor_window_end_button"),
-                    onClick = {
-                        val initial = uiState.windowEndMinuteOfDay ?: (22 * 60)
-                        onShowPicker(
-                            TaskDateTimePickerRequest(
-                                title = "设置窗口结束",
-                                mode = NoteFlowDateTimeSheetMode.TIME_ONLY,
-                                initialDateTime = LocalDate.now(zoneId).atTime(initial / 60, initial % 60),
-                                onConfirm = { selected -> onWindowEndMinuteChanged(selected.hour * 60 + selected.minute) },
-                            ),
-                        )
-                    },
-                    colors = noteFlowOutlinedButtonColors(),
-                ) { Text("设置结束时间") }
-                TextButton(
-                    modifier = Modifier.testTag("task_editor_clear_window_end"),
-                    onClick = { onWindowEndMinuteChanged(null) },
-                    enabled = uiState.windowEndMinuteOfDay != null,
-                ) { Text("清除") }
-            }
-        }
-
-        OutlinedTextField(
-            modifier = Modifier.fillMaxWidth().testTag("task_editor_repeat_interval_input"),
-            value = uiState.repeatIntervalMinutesText,
-            onValueChange = onRepeatIntervalChanged,
-            label = { Text("重复提醒间隔（分钟）") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            isError = uiState.repeatIntervalError != null,
-            supportingText = { uiState.repeatIntervalError?.let { Text(it) } },
-            colors = noteFlowOutlinedTextFieldColors(),
-        )
-
-        StandardFieldRow(label = "特别提醒") {
-            OutlinedButton(
-                modifier = Modifier.testTag("task_editor_add_exact_reminder"),
-                onClick = {
-                    val now = LocalDateTime.now(zoneId)
-                    onShowPicker(
-                        TaskDateTimePickerRequest(
-                            title = "添加特别提醒",
-                            mode = NoteFlowDateTimeSheetMode.DATE_TIME,
-                            initialDateTime = uiState.dueAt.toLocalDateTime() ?: now,
-                            minimumDateTime = now,
-                            onConfirm = { selected -> onAddExactReminder(selected.toEpochMillis(zoneId)) },
-                        ),
-                    )
-                },
-                colors = noteFlowOutlinedButtonColors(),
-            ) { Text("添加特别提醒") }
-
-            if (uiState.exactReminderTimes.isEmpty()) {
-                Text(text = "还没有特别提醒。", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            } else {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    uiState.exactReminderTimes.forEach { reminderAt ->
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(
-                                text = reminderAt.formatWith(formatter),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface,
+        NoteFlowEditorSection(
+            title = "提醒窗口",
+            subtitle = "只保留当天有效的提醒时间范围。",
+        ) {
+            StandardFieldRow(label = "开始提醒时间") {
+                ReadOnlyDateTimeField(label = "开始提醒时间", value = uiState.startReminderMinuteOfDay.toDisplayTime())
+                ChoiceRow {
+                    OutlinedButton(
+                        modifier = Modifier.testTag("task_editor_start_reminder_button"),
+                        onClick = {
+                            val initial = uiState.startReminderMinuteOfDay ?: 9 * 60
+                            onShowPicker(
+                                TaskDateTimePickerRequest(
+                                    title = "设置开始提醒",
+                                    mode = NoteFlowDateTimeSheetMode.TIME_ONLY,
+                                    initialDateTime = LocalDate.now(zoneId).atTime(initial / 60, initial % 60),
+                                    onConfirm = { selected -> onStartReminderMinuteChanged(selected.hour * 60 + selected.minute) },
+                                ),
                             )
-                            TextButton(onClick = { onRemoveExactReminder(reminderAt) }) { Text("删除") }
-                        }
-                    }
+                        },
+                        colors = noteFlowOutlinedButtonColors(),
+                    ) { Text("设置开始时间") }
+                    TextButton(
+                        modifier = Modifier.testTag("task_editor_clear_start_reminder"),
+                        onClick = { onStartReminderMinuteChanged(null) },
+                        enabled = uiState.startReminderMinuteOfDay != null,
+                    ) { Text("清除") }
+                }
+            }
+
+            StandardFieldRow(label = "提醒窗口结束时间") {
+                ReadOnlyDateTimeField(label = "提醒窗口结束时间", value = uiState.windowEndMinuteOfDay.toDisplayTime())
+                ChoiceRow {
+                    OutlinedButton(
+                        modifier = Modifier.testTag("task_editor_window_end_button"),
+                        onClick = {
+                            val initial = uiState.windowEndMinuteOfDay ?: (22 * 60)
+                            onShowPicker(
+                                TaskDateTimePickerRequest(
+                                    title = "设置窗口结束",
+                                    mode = NoteFlowDateTimeSheetMode.TIME_ONLY,
+                                    initialDateTime = LocalDate.now(zoneId).atTime(initial / 60, initial % 60),
+                                    onConfirm = { selected -> onWindowEndMinuteChanged(selected.hour * 60 + selected.minute) },
+                                ),
+                            )
+                        },
+                        colors = noteFlowOutlinedButtonColors(),
+                    ) { Text("设置结束时间") }
+                    TextButton(
+                        modifier = Modifier.testTag("task_editor_clear_window_end"),
+                        onClick = { onWindowEndMinuteChanged(null) },
+                        enabled = uiState.windowEndMinuteOfDay != null,
+                    ) { Text("清除") }
                 }
             }
         }
 
-        OutlinedTextField(
-            modifier = Modifier.fillMaxWidth().testTag("task_editor_notification_title_input"),
-            value = uiState.reminderNotificationTitle,
-            onValueChange = onReminderNotificationTitleChanged,
-            label = { Text("通知标题（可选）") },
-            singleLine = true,
-            colors = noteFlowOutlinedTextFieldColors(),
-        )
+        NoteFlowEditorSection(
+            title = "高级提醒",
+            subtitle = if (showAdvancedReminder) {
+                "收起后只保留摘要，适合不常改的提醒配置。"
+            } else {
+                uiState.advancedReminderSummary()
+            },
+        ) {
+            TextButton(onClick = { showAdvancedReminder = !showAdvancedReminder }) {
+                Text(if (showAdvancedReminder) "收起高级提醒" else "展开高级提醒")
+            }
+            if (showAdvancedReminder) {
+                OutlinedTextField(
+                    modifier = Modifier.fillMaxWidth().testTag("task_editor_repeat_interval_input"),
+                    value = uiState.repeatIntervalMinutesText,
+                    onValueChange = onRepeatIntervalChanged,
+                    label = { Text("重复提醒间隔（分钟）") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    isError = uiState.repeatIntervalError != null,
+                    supportingText = { uiState.repeatIntervalError?.let { Text(it) } },
+                    colors = noteFlowOutlinedTextFieldColors(),
+                )
 
-        OutlinedTextField(
-            modifier = Modifier.fillMaxWidth().testTag("task_editor_notification_body_input"),
-            value = uiState.reminderNotificationBody,
-            onValueChange = onReminderNotificationBodyChanged,
-            label = { Text("通知正文（可选）") },
-            minLines = 3,
-            maxLines = 4,
-            colors = noteFlowOutlinedTextFieldColors(),
-        )
+                StandardFieldRow(label = "特别提醒") {
+                    OutlinedButton(
+                        modifier = Modifier.testTag("task_editor_add_exact_reminder"),
+                        onClick = {
+                            val now = LocalDateTime.now(zoneId)
+                            onShowPicker(
+                                TaskDateTimePickerRequest(
+                                    title = "添加特别提醒",
+                                    mode = NoteFlowDateTimeSheetMode.DATE_TIME,
+                                    initialDateTime = uiState.dueAt.toLocalDateTime() ?: now,
+                                    minimumDateTime = now,
+                                    onConfirm = { selected -> onAddExactReminder(selected.toEpochMillis(zoneId)) },
+                                ),
+                            )
+                        },
+                        colors = noteFlowOutlinedButtonColors(),
+                    ) { Text("添加特别提醒") }
 
-        uiState.reminderError?.let { Text(text = it, color = MaterialTheme.colorScheme.error) }
+                    if (uiState.exactReminderTimes.isEmpty()) {
+                        Text(
+                            text = "还没有特别提醒。",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    } else {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            uiState.exactReminderTimes.forEach { reminderAt ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                ) {
+                                    Text(
+                                        text = reminderAt.formatWith(formatter),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                    )
+                                    TextButton(onClick = { onRemoveExactReminder(reminderAt) }) { Text("删除") }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                OutlinedTextField(
+                    modifier = Modifier.fillMaxWidth().testTag("task_editor_notification_title_input"),
+                    value = uiState.reminderNotificationTitle,
+                    onValueChange = onReminderNotificationTitleChanged,
+                    label = { Text("通知标题（可选）") },
+                    singleLine = true,
+                    colors = noteFlowOutlinedTextFieldColors(),
+                )
+
+                OutlinedTextField(
+                    modifier = Modifier.fillMaxWidth().testTag("task_editor_notification_body_input"),
+                    value = uiState.reminderNotificationBody,
+                    onValueChange = onReminderNotificationBodyChanged,
+                    label = { Text("通知正文（可选）") },
+                    minLines = 3,
+                    maxLines = 4,
+                    colors = noteFlowOutlinedTextFieldColors(),
+                )
+            }
+
+            uiState.reminderError?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+        }
     }
 }
 
@@ -602,70 +664,96 @@ private fun TaskCompletionStep(
     onRemoveSubTask: (String) -> Unit,
     onDeleteClicked: () -> Boolean,
 ) {
-    NoteFlowSectionCard(title = "完成方式") {
-        ChoiceRow {
-            TaskCompletionRule.entries.forEach { rule ->
-                FilterChip(
-                    selected = uiState.completionRule == rule,
-                    onClick = { onCompletionRuleSelected(rule) },
-                    label = {
-                        Text(
-                            when (rule) {
-                                TaskCompletionRule.MANUAL -> "手动完成"
-                                TaskCompletionRule.AUTO_ALL_SUBTASKS -> "子任务自动完成"
-                            },
-                        )
-                    },
-                    colors = noteFlowFilterChipColors(NoteFlowTaskAccent),
+    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        NoteFlowEditorSection(
+            title = "完成规则",
+            subtitle = "决定任务是手动结束，还是跟随子任务自动完成。",
+        ) {
+            ChoiceRow {
+                TaskCompletionRule.entries.forEach { rule ->
+                    FilterChip(
+                        selected = uiState.completionRule == rule,
+                        onClick = { onCompletionRuleSelected(rule) },
+                        label = {
+                            Text(
+                                when (rule) {
+                                    TaskCompletionRule.MANUAL -> "手动完成"
+                                    TaskCompletionRule.AUTO_ALL_SUBTASKS -> "子任务自动完成"
+                                },
+                            )
+                        },
+                        colors = noteFlowFilterChipColors(NoteFlowTaskAccent),
+                    )
+                }
+            }
+
+            if (uiState.canToggleTaskCompletion) {
+                StandardSwitchRow(
+                    title = "任务完成状态",
+                    description = "可以直接切换完成或恢复完成。",
+                    checked = uiState.isCompleted,
+                    onCheckedChange = onTaskCompletedChanged,
+                    accentColor = NoteFlowTaskAccent,
+                )
+            } else {
+                Text(
+                    text = "当前状态由子任务完成情况自动决定。",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
 
-        if (uiState.canToggleTaskCompletion) {
-            StandardSwitchRow(
-                title = "任务完成状态",
-                description = "可以直接切换完成或恢复完成。",
-                checked = uiState.isCompleted,
-                onCheckedChange = onTaskCompletedChanged,
-                accentColor = NoteFlowTaskAccent,
-            )
-        } else {
-            Text(
-                text = "当前状态由子任务完成情况自动决定。",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
+        NoteFlowEditorSection(
+            title = "子任务拆解",
+            subtitle = "只添加真正会影响完成判断的步骤。",
+        ) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(
+                    text = "当前步骤",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                TextButton(modifier = Modifier.testTag("task_editor_add_subtask"), onClick = onAddSubTask) {
+                    Text("新增子任务")
+                }
+            }
 
-    NoteFlowSectionCard(title = "子任务") {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(text = "按步骤拆解", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
-            TextButton(modifier = Modifier.testTag("task_editor_add_subtask"), onClick = onAddSubTask) { Text("新增子任务") }
-        }
-
-        if (uiState.subTasks.isEmpty()) {
-            Text(text = "还没有子任务。", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        } else {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                uiState.subTasks.forEach { subTask ->
-                    SubTaskEditorRow(
-                        subTask = subTask,
-                        onTitleChanged = { onSubTaskTitleChanged(subTask.id, it) },
-                        onCompletedChanged = { onSubTaskCompletedChanged(subTask.id, it) },
-                        onRemoveClicked = { onRemoveSubTask(subTask.id) },
-                    )
+            if (uiState.subTasks.isEmpty()) {
+                Text(
+                    text = "还没有子任务。",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    uiState.subTasks.forEach { subTask ->
+                        SubTaskEditorRow(
+                            subTask = subTask,
+                            onTitleChanged = { onSubTaskTitleChanged(subTask.id, it) },
+                            onCompletedChanged = { onSubTaskCompletedChanged(subTask.id, it) },
+                            onRemoveClicked = { onRemoveSubTask(subTask.id) },
+                        )
+                    }
                 }
             }
         }
-    }
 
-    NoteFlowSectionCard(title = "操作") {
         if (uiState.canDelete) {
-            TextButton(modifier = Modifier.fillMaxWidth().testTag("task_editor_delete"), onClick = { onDeleteClicked() }, enabled = !uiState.isSaving) {
-                Text(text = "软删除任务", color = MaterialTheme.colorScheme.error)
+            NoteFlowEditorSection(
+                title = "危险操作",
+                subtitle = "删除后会进入回收站，不影响底部主动作区。",
+            ) {
+                TextButton(
+                    modifier = Modifier.fillMaxWidth().testTag("task_editor_delete"),
+                    onClick = { onDeleteClicked() },
+                    enabled = !uiState.isSaving,
+                ) {
+                    Text(text = "软删除任务", color = MaterialTheme.colorScheme.error)
+                }
             }
         }
+
         uiState.saveErrorMessage?.let { errorMessage ->
             Text(
                 text = errorMessage,
@@ -757,6 +845,19 @@ private fun Int?.toDisplayTime(): String {
     val hour = this / 60
     val minute = this % 60
     return "%02d:%02d".format(hour, minute)
+}
+
+private fun TaskEditorUiState.advancedReminderSummary(): String {
+    val parts = buildList {
+        repeatIntervalMinutesText.toIntOrNull()?.takeIf { it > 0 }?.let { add("每 $it 分钟重复") }
+        if (exactReminderTimes.isNotEmpty()) add("${exactReminderTimes.size} 个特别提醒")
+        if (reminderNotificationTitle.isNotBlank() || reminderNotificationBody.isNotBlank()) add("自定义通知文案")
+    }
+    return if (parts.isEmpty()) {
+        "默认收起重复提醒、特别提醒和通知文案。"
+    } else {
+        parts.joinToString("，")
+    }
 }
 
 private fun LocalDateTime.toEpochMillis(zoneId: ZoneId): Long {

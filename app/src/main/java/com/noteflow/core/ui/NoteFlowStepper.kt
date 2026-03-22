@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 
 @Composable
 fun NoteFlowStepBar(
@@ -60,7 +61,7 @@ fun NoteFlowStepBar(
                 modifier = Modifier
                     .weight(1f)
                     .graphicsLayer {
-                        val scale = 0.98f + (selectionProgress * 0.02f)
+                        val scale = 0.985f + (selectionProgress * 0.015f)
                         scaleX = scale
                         scaleY = scale
                     },
@@ -74,8 +75,8 @@ fun NoteFlowStepBar(
                         .clickable(enabled = onStepSelected != null) {
                             onStepSelected?.invoke(index)
                         }
-                        .padding(horizontal = LayoutTokens.Space8, vertical = LayoutTokens.Space12),
-                    style = MaterialTheme.typography.labelLarge,
+                        .padding(horizontal = LayoutTokens.Space8, vertical = 10.dp),
+                    style = MaterialTheme.typography.labelMedium,
                     color = textColor,
                     textAlign = TextAlign.Center,
                     maxLines = 1,
@@ -107,7 +108,7 @@ fun NoteFlowStepBottomBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = LayoutTokens.Space20, vertical = LayoutTokens.Space16),
+                .padding(horizontal = LayoutTokens.Space20, vertical = LayoutTokens.Space12),
             horizontalArrangement = Arrangement.spacedBy(LayoutTokens.Space12),
             verticalAlignment = Alignment.CenterVertically,
         ) {

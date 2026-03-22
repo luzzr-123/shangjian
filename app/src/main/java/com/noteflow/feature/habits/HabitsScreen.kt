@@ -4,7 +4,6 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,7 +16,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -27,7 +25,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luuzr.jielv.core.designsystem.theme.NoteFlowHabitAccent
-import com.luuzr.jielv.core.ui.GlassLevel
 import com.luuzr.jielv.core.ui.GlassSurface
 import com.luuzr.jielv.core.ui.ModuleFab
 import com.luuzr.jielv.core.ui.NoteFlowEmptyStateCard
@@ -35,7 +32,6 @@ import com.luuzr.jielv.core.ui.NoteFlowMetaChip
 import com.luuzr.jielv.core.ui.NoteFlowStaggeredReveal
 import com.luuzr.jielv.core.ui.noteFlowButtonColors
 import com.luuzr.jielv.core.ui.noteFlowPressScale
-import com.luuzr.jielv.core.ui.noteFlowSwitchColors
 import com.luuzr.jielv.core.ui.rememberPressInteractionSource
 
 @Composable
@@ -52,8 +48,6 @@ fun HabitsRoute(
         onCreateHabit = onCreateHabit,
         onOpenHabit = onOpenHabit,
         onEditHabit = onEditHabit,
-        onTodayOnlyChanged = viewModel::onTodayOnlyChanged,
-        onShowDeletedChanged = viewModel::onShowDeletedChanged,
         onQuickCheckHabit = viewModel::onQuickCheckHabit,
         onRestoreHabit = viewModel::onRestoreHabit,
     )
@@ -65,8 +59,6 @@ fun HabitsScreen(
     onCreateHabit: () -> Unit,
     onOpenHabit: (String) -> Unit,
     onEditHabit: (String) -> Unit,
-    onTodayOnlyChanged: (Boolean) -> Unit,
-    onShowDeletedChanged: (Boolean) -> Unit,
     onQuickCheckHabit: (String) -> Unit,
     onRestoreHabit: (String) -> Unit,
 ) {
@@ -89,20 +81,9 @@ fun HabitsScreen(
                 .padding(horizontal = 20.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            item {
-                NoteFlowStaggeredReveal(revealKey = "habits_filter", index = 0) {
-                    HabitFilterCard(
-                        todayOnly = uiState.todayOnly,
-                        showDeleted = uiState.showDeleted,
-                        onTodayOnlyChanged = onTodayOnlyChanged,
-                        onShowDeletedChanged = onShowDeletedChanged,
-                    )
-                }
-            }
-
             if (uiState.activeHabits.isEmpty() && uiState.deletedHabits.isEmpty()) {
                 item {
-                    NoteFlowStaggeredReveal(revealKey = "habits_empty", index = 1) {
+                    NoteFlowStaggeredReveal(revealKey = "habits_empty", index = 0) {
                         NoteFlowEmptyStateCard(
                             title = uiState.emptyTitle,
                             description = uiState.emptyDescription,
@@ -122,7 +103,7 @@ fun HabitsScreen(
                 }
                 if (uiState.deletedHabits.isNotEmpty()) {
                     item {
-                        NoteFlowStaggeredReveal(revealKey = "habits_deleted_header", index = 1) {
+                        NoteFlowStaggeredReveal(revealKey = "habits_deleted_header", index = 0) {
                             Text(
                                 text = "已删除习惯",
                                 style = MaterialTheme.typography.titleMedium,
@@ -147,76 +128,6 @@ fun HabitsScreen(
                 Spacer(modifier = Modifier.height(112.dp))
             }
         }
-    }
-}
-
-@Composable
-private fun HabitFilterCard(
-    todayOnly: Boolean,
-    showDeleted: Boolean,
-    onTodayOnlyChanged: (Boolean) -> Unit,
-    onShowDeletedChanged: (Boolean) -> Unit,
-) {
-    GlassSurface(
-        modifier = Modifier.fillMaxWidth(),
-        accentColor = NoteFlowHabitAccent,
-        level = GlassLevel.Normal,
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            HabitSwitchRow(
-                title = "仅看今日应执行",
-                description = "只显示今天命中频率规则的习惯，今天已完成也会保留显示。",
-                checked = todayOnly,
-                testTag = "show_today_habits_switch",
-                onCheckedChange = onTodayOnlyChanged,
-            )
-            HabitSwitchRow(
-                title = "显示已删除",
-                description = "查看已软删除习惯，并在列表中直接恢复。",
-                checked = showDeleted,
-                testTag = "show_deleted_habits_switch",
-                onCheckedChange = onShowDeletedChanged,
-            )
-        }
-    }
-}
-
-@Composable
-private fun HabitSwitchRow(
-    title: String,
-    description: String,
-    checked: Boolean,
-    testTag: String,
-    onCheckedChange: (Boolean) -> Unit,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        Switch(
-            modifier = Modifier.testTag(testTag),
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            colors = noteFlowSwitchColors(NoteFlowHabitAccent),
-        )
     }
 }
 

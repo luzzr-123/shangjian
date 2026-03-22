@@ -16,7 +16,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -26,14 +25,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luuzr.jielv.core.designsystem.theme.NoteFlowTaskAccent
-import com.luuzr.jielv.core.ui.GlassLevel
 import com.luuzr.jielv.core.ui.GlassSurface
 import com.luuzr.jielv.core.ui.ModuleFab
 import com.luuzr.jielv.core.ui.NoteFlowEmptyStateCard
 import com.luuzr.jielv.core.ui.NoteFlowMetaChip
 import com.luuzr.jielv.core.ui.NoteFlowStaggeredReveal
 import com.luuzr.jielv.core.ui.noteFlowPressScale
-import com.luuzr.jielv.core.ui.noteFlowSwitchColors
 import com.luuzr.jielv.core.ui.rememberPressInteractionSource
 
 @Composable
@@ -50,7 +47,6 @@ fun TasksRoute(
         onCreateTask = onCreateTask,
         onOpenTask = onOpenTask,
         onEditTask = onEditTask,
-        onShowCompletedChanged = viewModel::onShowCompletedChanged,
         onTaskCompletionToggle = viewModel::onTaskCompletionToggle,
     )
 }
@@ -61,7 +57,6 @@ fun TasksScreen(
     onCreateTask: () -> Unit,
     onOpenTask: (String) -> Unit,
     onEditTask: (String) -> Unit,
-    onShowCompletedChanged: (Boolean) -> Unit,
     onTaskCompletionToggle: (String, Boolean) -> Unit,
 ) {
     Scaffold(
@@ -83,17 +78,9 @@ fun TasksScreen(
                 .padding(horizontal = 20.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            item {
-                NoteFlowStaggeredReveal(revealKey = "tasks_filter", index = 0) {
-                    TaskFilterCard(
-                        showCompleted = uiState.showCompleted,
-                        onShowCompletedChanged = onShowCompletedChanged,
-                    )
-                }
-            }
             if (uiState.tasks.isEmpty()) {
                 item {
-                    NoteFlowStaggeredReveal(revealKey = "tasks_empty", index = 1) {
+                    NoteFlowStaggeredReveal(revealKey = "tasks_empty", index = 0) {
                         NoteFlowEmptyStateCard(
                             title = uiState.emptyTitle,
                             description = uiState.emptyDescription,
@@ -114,47 +101,6 @@ fun TasksScreen(
             item {
                 Spacer(modifier = Modifier.height(112.dp))
             }
-        }
-    }
-}
-
-@Composable
-private fun TaskFilterCard(
-    showCompleted: Boolean,
-    onShowCompletedChanged: (Boolean) -> Unit,
-) {
-    GlassSurface(
-        modifier = Modifier.fillMaxWidth(),
-        accentColor = NoteFlowTaskAccent,
-        level = GlassLevel.Normal,
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 18.dp, vertical = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Text(
-                    text = "显示已完成任务",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    text = "默认隐藏已完成项，保持当前待办列表更聚焦。",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Switch(
-                modifier = Modifier.testTag("show_completed_switch"),
-                checked = showCompleted,
-                onCheckedChange = onShowCompletedChanged,
-                colors = noteFlowSwitchColors(NoteFlowTaskAccent),
-            )
         }
     }
 }
@@ -189,7 +135,9 @@ private fun TaskCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Column(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .fillMaxWidth(0.82f)
+                        .padding(end = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     Text(

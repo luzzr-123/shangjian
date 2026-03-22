@@ -48,10 +48,12 @@ class QualityScreenStateTest {
                     ),
                     onCreateTask = { taskClicked = true },
                     onOpenTask = {},
+                    onEditTask = {},
                     onOpenTasks = {},
                     onTaskAction = { _, _ -> },
                     onCreateHabit = { habitClicked = true },
                     onOpenHabit = {},
+                    onEditHabit = {},
                     onOpenHabits = {},
                     onHabitPrimaryAction = { _, _, _ -> },
                     onHabitSecondaryAction = { _, _ -> },
@@ -110,10 +112,12 @@ class QualityScreenStateTest {
                     ),
                     onCreateTask = {},
                     onOpenTask = {},
+                    onEditTask = {},
                     onOpenTasks = {},
                     onTaskAction = { _, _ -> },
                     onCreateHabit = {},
                     onOpenHabit = {},
+                    onEditHabit = {},
                     onOpenHabits = {},
                     onHabitPrimaryAction = { _, _, _ -> },
                     onHabitSecondaryAction = { _, _ -> },
@@ -159,10 +163,12 @@ class QualityScreenStateTest {
                     ),
                     onCreateTask = {},
                     onOpenTask = {},
+                    onEditTask = {},
                     onOpenTasks = {},
                     onTaskAction = { _, _ -> },
                     onCreateHabit = {},
                     onOpenHabit = {},
+                    onEditHabit = {},
                     onOpenHabits = {},
                     onHabitPrimaryAction = { _, _, _ -> },
                     onHabitSecondaryAction = { _, _ -> },
@@ -190,11 +196,11 @@ class QualityScreenStateTest {
                         resultMessage = "已保存",
                     ),
                     onNavigateBack = {},
-                    onQuietHoursEnabledChanged = {},
-                    onSelectQuietHoursStart = { _, _ -> },
-                    onSelectQuietHoursEnd = { _, _ -> },
                     onTaskDefaultIntervalChanged = {},
                     onHabitDefaultIntervalChanged = {},
+                    onShowCompletedTasksChanged = {},
+                    onShowOnlyTodayHabitsChanged = {},
+                    onShowDeletedHabitsChanged = {},
                     onSaveDefaults = {},
                     onOpenNotificationSettings = {},
                     onOpenTrash = {},
@@ -205,6 +211,9 @@ class QualityScreenStateTest {
 
         assertTagExists("settings_error")
         assertTagExists("settings_result")
+        assertTagExists("settings_show_completed_tasks")
+        assertTagExists("settings_show_today_habits")
+        assertTagExists("settings_show_deleted_habits")
         composeRule.onNodeWithTag("settings_content").performTouchInput { swipeUp() }
         assertTagExists("settings_open_trash")
         assertTagExists("settings_open_backup")

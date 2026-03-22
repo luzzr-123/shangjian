@@ -10,12 +10,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,7 +33,6 @@ import com.luuzr.jielv.core.designsystem.theme.NoteFlowTaskAccent
 import com.luuzr.jielv.core.ui.NoteFlowStaggeredReveal
 import com.luuzr.jielv.domain.usecase.HabitQuickActionType
 import com.luuzr.jielv.domain.usecase.TaskQuickActionType
-import com.luuzr.jielv.feature.settings.TopLevelSettingsButton
 import kotlinx.coroutines.flow.Flow
 
 @Composable
@@ -137,21 +134,18 @@ fun TodayScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             item {
-                TodayCompactHeader(
+                TodayHeroCard(
+                    title = uiState.title,
                     dateLine = uiState.dateLine,
+                    summary = uiState.summary,
                     onOpenSettings = onOpenSettings,
                 )
             }
             item {
-                NoteFlowStaggeredReveal(revealKey = "today_summary", index = 0) {
-                    TodaySummaryCard(uiState.summary)
-                }
-            }
-            item {
-                NoteFlowStaggeredReveal(revealKey = "today_dual_area", index = 1) {
+                NoteFlowStaggeredReveal(revealKey = "today_dual_area", index = 0) {
                     TodayDualColumnQuickArea(
                         uiState = uiState,
                         onOpenTask = onOpenTask,
@@ -201,105 +195,135 @@ private fun TodayDualColumnQuickArea(
             horizontalArrangement = Arrangement.spacedBy(layoutSpec.columnGap),
             verticalAlignment = Alignment.Top,
         ) {
-            Column(
+            TodayTasksSection(
                 modifier = Modifier
                     .weight(1f)
                     .testTag("today_tasks_column"),
-                verticalArrangement = Arrangement.spacedBy(layoutSpec.cardGap),
-            ) {
-                TodaySectionHeader(
-                    title = "今日待办",
-                    actionLabel = "查看全部",
-                    testTag = "today_view_all_tasks",
-                    layoutSpec = layoutSpec,
-                    onActionClick = onOpenTasks,
-                )
-                if (uiState.tasks.isEmpty()) {
-                    TodayEmptySectionCard(
-                        title = "暂无待办",
-                        description = "创建一条任务。",
-                        actionLabel = "新建任务",
-                        actionTestTag = "today_empty_create_task",
-                        accentColor = NoteFlowTaskAccent,
-                        layoutSpec = layoutSpec,
-                        onActionClick = onCreateTask,
-                    )
-                } else {
-                    uiState.tasks.forEach { task ->
-                        TodayTaskCard(
-                            item = task,
-                            layoutSpec = layoutSpec,
-                            onClick = { onOpenTask(task.id) },
-                            onLongClick = { onEditTask(task.id) },
-                            onAction = { onTaskAction(task.id, task.actionType) },
-                        )
-                    }
-                }
-            }
-
-            Column(
+                tasks = uiState.tasks,
+                layoutSpec = layoutSpec,
+                onOpenTask = onOpenTask,
+                onEditTask = onEditTask,
+                onOpenTasks = onOpenTasks,
+                onTaskAction = onTaskAction,
+                onCreateTask = onCreateTask,
+            )
+            TodayHabitsSection(
                 modifier = Modifier
                     .weight(1f)
                     .testTag("today_habits_column"),
-                verticalArrangement = Arrangement.spacedBy(layoutSpec.cardGap),
-            ) {
-                TodaySectionHeader(
-                    title = "今日习惯",
-                    actionLabel = "查看全部",
-                    testTag = "today_view_all_habits",
+                habits = uiState.habits,
+                layoutSpec = layoutSpec,
+                onOpenHabit = onOpenHabit,
+                onEditHabit = onEditHabit,
+                onOpenHabits = onOpenHabits,
+                onHabitPrimaryAction = onHabitPrimaryAction,
+                onHabitSecondaryAction = onHabitSecondaryAction,
+                onCreateHabit = onCreateHabit,
+            )
+        }
+    }
+}
+
+@Composable
+private fun TodayTasksSection(
+    modifier: Modifier,
+    tasks: List<TodayTaskCardUiModel>,
+    layoutSpec: TodayCompactLayoutSpec,
+    onOpenTask: (String) -> Unit,
+    onEditTask: (String) -> Unit,
+    onOpenTasks: () -> Unit,
+    onTaskAction: (String, TaskQuickActionType) -> Unit,
+    onCreateTask: () -> Unit,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(layoutSpec.cardGap),
+    ) {
+        TodaySectionHeader(
+            title = "今日待办",
+            count = tasks.size,
+            actionLabel = "查看全部",
+            testTag = "today_view_all_tasks",
+            layoutSpec = layoutSpec,
+            onActionClick = onOpenTasks,
+        )
+        if (tasks.isEmpty()) {
+            TodayEmptySectionCard(
+                title = "暂无待办",
+                description = "创建一条任务。",
+                actionLabel = "新建任务",
+                actionTestTag = "today_empty_create_task",
+                accentColor = NoteFlowTaskAccent,
+                layoutSpec = layoutSpec,
+                onActionClick = onCreateTask,
+            )
+        } else {
+            tasks.forEach { task ->
+                TodayTaskCard(
+                    item = task,
                     layoutSpec = layoutSpec,
-                    onActionClick = onOpenHabits,
+                    onClick = { onOpenTask(task.id) },
+                    onLongClick = { onEditTask(task.id) },
+                    onAction = { onTaskAction(task.id, task.actionType) },
                 )
-                if (uiState.habits.isEmpty()) {
-                    TodayEmptySectionCard(
-                        title = "暂无习惯",
-                        description = "创建一个习惯。",
-                        actionLabel = "新建习惯",
-                        actionTestTag = "today_empty_create_habit",
-                        accentColor = NoteFlowHabitAccent,
-                        layoutSpec = layoutSpec,
-                        onActionClick = onCreateHabit,
-                    )
-                } else {
-                    uiState.habits.forEach { habit ->
-                        TodayHabitCard(
-                            item = habit,
-                            layoutSpec = layoutSpec,
-                            onClick = { onOpenHabit(habit.id) },
-                            onLongClick = { onEditHabit(habit.id) },
-                            onPrimaryAction = {
-                                onHabitPrimaryAction(
-                                    habit.id,
-                                    habit.primaryActionType,
-                                    habit.durationRunning,
-                                )
-                            },
-                            onSecondaryAction = {
-                                habit.secondaryActionType?.let { onHabitSecondaryAction(habit.id, it) }
-                            },
-                        )
-                    }
-                }
             }
         }
     }
 }
 
 @Composable
-private fun TodayCompactHeader(
-    dateLine: String,
-    onOpenSettings: () -> Unit,
+private fun TodayHabitsSection(
+    modifier: Modifier,
+    habits: List<TodayHabitCardUiModel>,
+    layoutSpec: TodayCompactLayoutSpec,
+    onOpenHabit: (String) -> Unit,
+    onEditHabit: (String) -> Unit,
+    onOpenHabits: () -> Unit,
+    onHabitPrimaryAction: (String, HabitQuickActionType, Boolean) -> Unit,
+    onHabitSecondaryAction: (String, HabitQuickActionType) -> Unit,
+    onCreateHabit: () -> Unit,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(layoutSpec.cardGap),
     ) {
-        Text(
-            text = dateLine,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        TodaySectionHeader(
+            title = "今日习惯",
+            count = habits.size,
+            actionLabel = "查看全部",
+            testTag = "today_view_all_habits",
+            layoutSpec = layoutSpec,
+            onActionClick = onOpenHabits,
         )
-        TopLevelSettingsButton(onClick = onOpenSettings)
+        if (habits.isEmpty()) {
+            TodayEmptySectionCard(
+                title = "暂无习惯",
+                description = "创建一个习惯。",
+                actionLabel = "新建习惯",
+                actionTestTag = "today_empty_create_habit",
+                accentColor = NoteFlowHabitAccent,
+                layoutSpec = layoutSpec,
+                onActionClick = onCreateHabit,
+            )
+        } else {
+            habits.forEach { habit ->
+                TodayHabitCard(
+                    item = habit,
+                    layoutSpec = layoutSpec,
+                    onClick = { onOpenHabit(habit.id) },
+                    onLongClick = { onEditHabit(habit.id) },
+                    onPrimaryAction = {
+                        onHabitPrimaryAction(
+                            habit.id,
+                            habit.primaryActionType,
+                            habit.durationRunning,
+                        )
+                    },
+                    onSecondaryAction = {
+                        habit.secondaryActionType?.let { onHabitSecondaryAction(habit.id, it) }
+                    },
+                )
+            }
+        }
     }
 }

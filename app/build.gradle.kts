@@ -25,7 +25,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.luuzr.jielv"
+        applicationId = "luzzr.zou"
         minSdk = 29
         targetSdk = 36
         versionCode = 2

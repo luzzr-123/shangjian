@@ -7,6 +7,7 @@ import com.luuzr.jielv.domain.model.Task
 import com.luuzr.jielv.domain.model.TaskCompletionRule
 import com.luuzr.jielv.domain.model.TaskPriority
 import com.luuzr.jielv.domain.model.TaskStatus
+import com.luuzr.jielv.domain.usecase.ObserveReminderPreferencesUseCase
 import com.luuzr.jielv.domain.usecase.ObserveTasksUseCase
 import com.luuzr.jielv.domain.usecase.ToggleTaskCompletedUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,7 +15,6 @@ import java.time.Instant
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
@@ -25,15 +25,16 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 @OptIn(ExperimentalCoroutinesApi::class)
 class TasksViewModel @Inject constructor(
+    observeReminderPreferencesUseCase: ObserveReminderPreferencesUseCase,
     private val observeTasksUseCase: ObserveTasksUseCase,
     private val toggleTaskCompletedUseCase: ToggleTaskCompletedUseCase,
     private val timeProvider: TimeProvider,
 ) : ViewModel() {
 
-    private val showCompleted = MutableStateFlow(false)
     private val dateTimeFormatter = DateTimeFormatter.ofPattern("MM-dd HH:mm")
 
-    val uiState: StateFlow<TasksUiState> = showCompleted
+    val uiState: StateFlow<TasksUiState> = observeReminderPreferencesUseCase()
+        .map { preferences -> preferences.showCompletedTasks }
         .flatMapLatest { includeCompleted ->
             observeTasksUseCase(includeCompleted = includeCompleted)
                 .map { tasks ->
@@ -58,10 +59,6 @@ class TasksViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = TasksUiState(),
         )
-
-    fun onShowCompletedChanged(checked: Boolean) {
-        showCompleted.value = checked
-    }
 
     fun onTaskCompletionToggle(taskId: String, completed: Boolean) {
         viewModelScope.launch {
