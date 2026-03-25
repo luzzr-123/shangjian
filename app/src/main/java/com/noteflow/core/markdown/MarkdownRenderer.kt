@@ -1,7 +1,5 @@
 package com.luuzr.jielv.core.markdown
 
-import android.graphics.BitmapFactory
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -13,16 +11,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -33,6 +36,8 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
 import java.io.File
 
 @Composable
@@ -169,7 +174,7 @@ private fun MarkdownList(
                 verticalAlignment = Alignment.Top,
             ) {
                 Text(
-                    text = if (ordered) "${index + 1}." else "•",
+                    text = if (ordered) "${index + 1}." else "\u2022",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
@@ -221,50 +226,69 @@ private fun MarkdownImage(
     destination: String,
     mediaLookup: Map<String, String>,
 ) {
+    val isLocalMedia = destination.startsWith(localMediaPrefix)
     val mediaId = destination.removePrefix(localMediaPrefix)
     val localPath = mediaLookup[mediaId]
-    val bitmap = remember(localPath) {
-        localPath
-            ?.takeIf { File(it).exists() }
-            ?.let(BitmapFactory::decodeFile)
-            ?.asImageBitmap()
-    }
+    val imageFile = remember(localPath) { localPath?.let(::File) }
+    val context = LocalContext.current
+    var loadState by remember(localPath) { mutableStateOf(MarkdownImageLoadState.Idle) }
 
-    if (destination.startsWith(localMediaPrefix) && bitmap != null) {
-        Image(
-            bitmap = bitmap,
-            contentDescription = null,
+    if (isLocalMedia && imageFile?.exists() == true && loadState != MarkdownImageLoadState.Error) {
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = RoundedCornerShape(18.dp),
-                ),
-            contentScale = ContentScale.FillWidth,
-        )
-    } else {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = RoundedCornerShape(16.dp),
-                )
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                .clip(RoundedCornerShape(18.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center,
         ) {
-            Box(
-                modifier = Modifier
-                    .size(12.dp)
-                    .background(Color(0xFFFFB74D), RoundedCornerShape(999.dp)),
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(imageFile)
+                    .build(),
+                contentDescription = null,
+                modifier = Modifier.fillMaxWidth(),
+                contentScale = ContentScale.FillWidth,
+                onLoading = { loadState = MarkdownImageLoadState.Loading },
+                onSuccess = { loadState = MarkdownImageLoadState.Success },
+                onError = { loadState = MarkdownImageLoadState.Error },
             )
-            Text(
-                text = "图片不可用",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            if (loadState == MarkdownImageLoadState.Loading) {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .padding(vertical = 24.dp)
+                        .size(28.dp),
+                    strokeWidth = 2.5.dp,
+                )
+            }
         }
+    } else {
+        MarkdownImageFallback()
+    }
+}
+
+@Composable
+private fun MarkdownImageFallback() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                shape = RoundedCornerShape(16.dp),
+            )
+            .padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(12.dp)
+                .background(Color(0xFFFFB74D), RoundedCornerShape(999.dp)),
+        )
+        Text(
+            text = "\u56fe\u7247\u4e0d\u53ef\u7528",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
@@ -454,7 +478,11 @@ private fun appendInlineSegment(
 
             source.startsWith("[", index) -> {
                 val closingText = source.indexOf("](", startIndex = index + 1)
-                val closingUrl = if (closingText != -1) source.indexOf(')', startIndex = closingText + 2) else -1
+                val closingUrl = if (closingText != -1) {
+                    source.indexOf(')', startIndex = closingText + 2)
+                } else {
+                    -1
+                }
                 if (closingText != -1 && closingUrl != -1) {
                     val textPart = source.substring(index + 1, closingText)
                     val urlPart = source.substring(closingText + 2, closingUrl)
@@ -497,6 +525,13 @@ private sealed interface MarkdownBlock {
     data class CodeBlock(val code: String) : MarkdownBlock
     data class Image(val destination: String) : MarkdownBlock
     data object Divider : MarkdownBlock
+}
+
+private enum class MarkdownImageLoadState {
+    Idle,
+    Loading,
+    Success,
+    Error,
 }
 
 private val headingRegex = Regex("""^(#{1,6})\s+(.*)$""")

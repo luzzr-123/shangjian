@@ -8,12 +8,10 @@ class NoteImageReferenceVisualTransformationTest {
 
     @Test
     fun `image markdown is shown as readable placeholder`() {
-        val transformation = NoteImageReferenceVisualTransformation()
-
-        val transformed = transformation.filter(
-            AnnotatedString("你好 ![image](local://media/abc) 世界")
+        val transformed = NoteImageReferenceVisualTransformation.filter(
+            AnnotatedString("\u4f60\u597d ![image](local://media/abc) \u4e16\u754c"),
         )
 
-        assertEquals("你好 〔图片1〕 世界", transformed.text.text)
+        assertEquals("\u4f60\u597d \u3014\u56fe\u72471\u3015 \u4e16\u754c", transformed.text.text)
     }
 }

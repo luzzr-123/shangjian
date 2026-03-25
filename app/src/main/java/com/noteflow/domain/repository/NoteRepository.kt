@@ -26,5 +26,7 @@ interface NoteRepository {
         sourceUri: String,
     ): InsertedNoteImage
 
+    suspend fun cleanupOrphanedMedia() = Unit
+
     suspend fun discardDraft(noteId: String)
 }

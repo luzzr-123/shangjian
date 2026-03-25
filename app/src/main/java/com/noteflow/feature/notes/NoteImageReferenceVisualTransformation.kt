@@ -29,7 +29,7 @@ object NoteImageReferenceVisualTransformation : VisualTransformation {
                 transformedIndex += 1
             }
 
-            val placeholder = "〔图片$imageIndex〕"
+            val placeholder = "\u3014\u56fe\u7247$imageIndex\u3015"
             repeat(match.value.length) { offset ->
                 originalToTransformed[match.range.first + offset] = transformedIndex
             }
@@ -65,8 +65,9 @@ object NoteImageReferenceVisualTransformation : VisualTransformation {
 
         return TransformedText(
             text = AnnotatedString(transformed.toString()),
-            offsetMapping = offsetMapping
+            offsetMapping = offsetMapping,
         )
     }
+
     private val imageReferenceRegex = Regex("""!\[[^\]]*]\(local://media/([^)]+)\)""")
 }

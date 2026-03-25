@@ -15,7 +15,7 @@ class MarkdownRendererParsingTest {
         assertTrue(parts[1] is MarkdownInlinePart.Image)
         assertTrue(parts[2] is MarkdownInlinePart.Text)
         assertEquals("开头 ", (parts[0] as MarkdownInlinePart.Text).value)
-        assertEquals("local://media/a1", (parts[1] as MarkdownInlinePart.Image).source)
+        assertEquals("local://media/a1", (parts[1] as MarkdownInlinePart.Image).destination)
         assertEquals(" 结尾", (parts[2] as MarkdownInlinePart.Text).value)
     }
 
@@ -25,7 +25,7 @@ class MarkdownRendererParsingTest {
             "A ![image](local://media/first) B ![image](local://media/second) C"
         )
 
-        val imageSources = parts.filterIsInstance<MarkdownInlinePart.Image>().map { it.source }
+        val imageSources = parts.filterIsInstance<MarkdownInlinePart.Image>().map { it.destination }
 
         assertEquals(listOf("local://media/first", "local://media/second"), imageSources)
     }

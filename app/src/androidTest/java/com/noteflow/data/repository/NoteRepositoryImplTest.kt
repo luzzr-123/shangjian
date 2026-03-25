@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -96,7 +97,7 @@ class NoteRepositoryImplTest {
             note(
                 id = noteId,
                 title = "Without image",
-                contentMarkdown = "正文",
+                contentMarkdown = "Body",
             ),
         )
 
@@ -109,7 +110,7 @@ class NoteRepositoryImplTest {
     fun softDeleteHidesNoteAndMedia() = runBlocking {
         val noteId = UUID.randomUUID().toString()
         repository.importImage(noteId, "content://image")
-        repository.saveNote(note(id = noteId, title = "Delete me", contentMarkdown = "正文"))
+        repository.saveNote(note(id = noteId, title = "Delete me", contentMarkdown = "Body"))
 
         repository.softDeleteNote(noteId)
 
@@ -135,13 +136,57 @@ class NoteRepositoryImplTest {
     fun hardDeleteRemovesNoteAndDeletesFiles() = runBlocking {
         val noteId = UUID.randomUUID().toString()
         repository.importImage(noteId, "content://image")
-        repository.saveNote(note(id = noteId, title = "Hard delete", contentMarkdown = "正文"))
+        repository.saveNote(note(id = noteId, title = "Hard delete", contentMarkdown = "Body"))
 
         repository.hardDeleteNote(noteId)
 
         assertTrue(database.noteDao().getNote(noteId) == null)
         assertTrue(database.mediaDao().getAllMedia().none { it.ownerId == noteId })
         assertEquals(setOf("/virtual/media-1.jpg"), fakeStorage.deletedPaths.toSet())
+    }
+
+    @Test
+    fun discardDraftHardDeletesOrphanedMediaForMissingNote() = runBlocking {
+        val noteId = UUID.randomUUID().toString()
+        repository.importImage(noteId, "content://image")
+
+        repository.discardDraft(noteId)
+
+        assertTrue(database.mediaDao().getMediaForOwner("note", noteId).isEmpty())
+        assertEquals(listOf("/virtual/media-1.jpg"), fakeStorage.deletedPaths)
+    }
+
+    @Test
+    fun getNoteCleansOrphanedMediaWhenNoteDoesNotExist() = runBlocking {
+        val noteId = UUID.randomUUID().toString()
+        repository.importImage(noteId, "content://image")
+
+        val note = repository.getNote(noteId)
+
+        assertNull(note)
+        assertTrue(database.mediaDao().getMediaForOwner("note", noteId).isEmpty())
+        assertEquals(listOf("/virtual/media-1.jpg"), fakeStorage.deletedPaths)
+    }
+
+    @Test
+    fun cleanupOrphanedMediaSweepsUnreachableDraftMedia() = runBlocking {
+        val firstDraftId = UUID.randomUUID().toString()
+        val secondDraftId = UUID.randomUUID().toString()
+        repository.importImage(firstDraftId, "content://image")
+        repository.importImage(secondDraftId, "content://image")
+        repository.saveNote(
+            note(
+                id = secondDraftId,
+                title = "Kept note",
+                contentMarkdown = "![image](local://media/media-2)",
+            ),
+        )
+
+        repository.cleanupOrphanedMedia()
+
+        assertTrue(database.mediaDao().getMediaForOwner("note", firstDraftId).isEmpty())
+        assertEquals(listOf("media-2"), database.mediaDao().getMediaForOwner("note", secondDraftId).map { it.id })
+        assertEquals(listOf("/virtual/media-1.jpg"), fakeStorage.deletedPaths)
     }
 
     private fun note(
@@ -181,7 +226,7 @@ class NoteRepositoryImplTest {
         private var nextId = 1
         val deletedPaths = mutableListOf<String>()
 
-        override fun importImage(noteId: String, sourceUri: String): StoredNoteImage {
+        override suspend fun importImage(noteId: String, sourceUri: String): StoredNoteImage {
             val mediaId = "media-${nextId++}"
             return StoredNoteImage(
                 mediaId = mediaId,

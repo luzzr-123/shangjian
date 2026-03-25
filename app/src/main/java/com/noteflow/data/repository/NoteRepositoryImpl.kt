@@ -41,7 +41,13 @@ class NoteRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getNote(noteId: String): NoteDetail? {
-        val note = noteDao.getActiveNote(noteId) ?: return null
+        val note = noteDao.getActiveNote(noteId)
+        if (note == null) {
+            if (noteDao.getNote(noteId) == null) {
+                cleanupOrphanedMedia(noteId)
+            }
+            return null
+        }
         return NoteDetail(
             note = note.toDomain(),
             images = mediaDao.getActiveMediaForOwner(ownerType = ownerType, ownerId = noteId)
@@ -134,8 +140,21 @@ class NoteRepositoryImpl @Inject constructor(
         )
     }
 
+    override suspend fun cleanupOrphanedMedia() {
+        val noteIds = noteDao.getAllNotes().mapTo(mutableSetOf()) { it.id }
+        val orphanedMedia = mediaDao.getAllMedia()
+            .filter { media -> media.ownerType == ownerType && media.ownerId !in noteIds }
+
+        hardDeleteMedia(orphanedMedia)
+    }
+
     override suspend fun discardDraft(noteId: String) {
-        val persistedMarkdown = noteDao.getActiveNote(noteId)?.contentMarkdown
+        val persistedNote = noteDao.getNote(noteId)
+        if (persistedNote == null) {
+            cleanupOrphanedMedia(noteId)
+            return
+        }
+        val persistedMarkdown = persistedNote.contentMarkdown
         val referencedMediaIds = imageReferenceParser.extractMediaIds(persistedMarkdown)
         cleanupUnreferencedMedia(
             noteId = noteId,
@@ -162,6 +181,23 @@ class NoteRepositoryImpl @Inject constructor(
         )
         removableMedia.forEach { media ->
             runCatching { noteImageStorage.deleteImage(media.localPath) }
+        }
+    }
+
+    private suspend fun cleanupOrphanedMedia(noteId: String) {
+        val orphanedMedia = mediaDao.getMediaForOwner(
+            ownerType = ownerType,
+            ownerId = noteId,
+        )
+        hardDeleteMedia(orphanedMedia)
+    }
+
+    private suspend fun hardDeleteMedia(mediaItems: List<MediaEntity>) {
+        if (mediaItems.isEmpty()) return
+
+        mediaItems.forEach { media ->
+            runCatching { noteImageStorage.deleteImage(media.localPath) }
+            mediaDao.hardDeleteMediaById(media.id)
         }
     }
 
