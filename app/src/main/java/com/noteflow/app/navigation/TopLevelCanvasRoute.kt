@@ -10,6 +10,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
@@ -60,6 +61,7 @@ fun TopLevelCanvasRoute(
     val designTokens = NoteFlowDesignTokens.colors
     val destinations = TopLevelDestination.entries
     val selectedIndex = destinations.indexOf(selectedDestination).coerceAtLeast(0)
+    val latestSelectedDestination by rememberUpdatedState(selectedDestination)
     val pagerState = rememberPagerState(
         initialPage = selectedIndex,
         pageCount = { destinations.size },
@@ -67,16 +69,16 @@ fun TopLevelCanvasRoute(
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(selectedIndex) {
-        if (pagerState.currentPage != selectedIndex) {
+        if (pagerState.currentPage != selectedIndex && pagerState.targetPage != selectedIndex) {
             pagerState.animateScrollToPage(selectedIndex)
         }
     }
 
     LaunchedEffect(pagerState) {
-        snapshotFlow { pagerState.currentPage }
+        snapshotFlow { pagerState.settledPage }
             .map { page -> destinations[page] }
             .distinctUntilChanged()
-            .filter { destination -> destination != selectedDestination }
+            .filter { destination -> destination != latestSelectedDestination }
             .collect { destination ->
                 onDestinationChanged(destination)
             }

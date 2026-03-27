@@ -10,11 +10,17 @@ import androidx.compose.ui.test.performTextInput
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.RuleChain
 
 class NoteCrudSmokeTest {
 
+    private val startupPermissionRule = StartupPermissionSetupRule()
+    private val composeRule = createAndroidComposeRule<MainActivity>()
+
     @get:Rule
-    val composeRule = createAndroidComposeRule<MainActivity>()
+    val ruleChain: RuleChain = RuleChain
+        .outerRule(startupPermissionRule)
+        .around(composeRule)
 
     @Test
     fun createsReadsAndEditsNote() {

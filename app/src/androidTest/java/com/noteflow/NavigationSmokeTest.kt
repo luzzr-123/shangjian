@@ -7,11 +7,17 @@ import androidx.compose.ui.test.performClick
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.RuleChain
 
 class NavigationSmokeTest {
 
+    private val startupPermissionRule = StartupPermissionSetupRule()
+    private val composeRule = createAndroidComposeRule<MainActivity>()
+
     @get:Rule
-    val composeRule = createAndroidComposeRule<MainActivity>()
+    val ruleChain: RuleChain = RuleChain
+        .outerRule(startupPermissionRule)
+        .around(composeRule)
 
     @Test
     fun switchesAcrossAllTopLevelTabs() {
@@ -31,6 +37,21 @@ class NavigationSmokeTest {
         assertTagExists("settings_show_completed_tasks")
         assertTagExists("settings_show_today_habits")
         assertTagExists("settings_show_deleted_habits")
+
+        composeRule.onNodeWithTag("settings_back").performClick()
+        assertTagExists("today_summary_card")
+    }
+
+    @Test
+    fun returnsToTodayWithoutBouncingBackToPreviousTab() {
+        assertTagExists("today_summary_card")
+
+        composeRule.onNodeWithTag("nav_tasks").performClick()
+        assertTagExists("tasks_fab")
+
+        composeRule.onNodeWithTag("nav_today").performClick()
+        composeRule.onNodeWithTag("open_settings").performClick()
+        assertTagExists("settings_show_completed_tasks")
 
         composeRule.onNodeWithTag("settings_back").performClick()
         assertTagExists("today_summary_card")
