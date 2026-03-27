@@ -3,32 +3,31 @@ package com.luuzr.jielv.core.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.dp
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowGlassBorder
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowGlassBorderSoft
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowBackgroundRaised
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowSurface
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowSurfaceVariant
+import com.luuzr.jielv.core.designsystem.theme.NoteFlowDesignTokens
 
+@Composable
 fun Modifier.noteFlowGlassBackground(
     level: GlassLevel = GlassLevel.Normal,
     accentColor: Color = Color.Transparent,
     shape: Shape = RoundedCornerShape(24.dp),
 ): Modifier {
+    val designTokens = NoteFlowDesignTokens.colors
     val containerColor = when (level) {
-        GlassLevel.Weak -> NoteFlowBackgroundRaised
-        GlassLevel.Normal -> NoteFlowSurface
-        GlassLevel.Strong -> NoteFlowSurfaceVariant
+        GlassLevel.Weak -> designTokens.backgroundRaised
+        GlassLevel.Normal -> designTokens.surface
+        GlassLevel.Strong -> designTokens.surfaceVariant
     }
     val borderColor = when (level) {
-        GlassLevel.Weak -> NoteFlowGlassBorderSoft.copy(alpha = 0.70f)
-        GlassLevel.Normal -> NoteFlowGlassBorderSoft
-        GlassLevel.Strong -> NoteFlowGlassBorder
+        GlassLevel.Weak -> designTokens.glassBorderSoft.copy(alpha = 0.70f)
+        GlassLevel.Normal -> designTokens.glassBorderSoft
+        GlassLevel.Strong -> designTokens.glassBorder
     }
     val resolvedBorderColor = if (accentColor != Color.Transparent) {
         lerp(

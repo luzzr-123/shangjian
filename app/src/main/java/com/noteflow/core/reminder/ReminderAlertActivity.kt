@@ -34,9 +34,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import com.luuzr.jielv.MainActivity
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowSurfaceFloating
 import com.luuzr.jielv.core.designsystem.theme.NoteFlowTheme
+import com.luuzr.jielv.core.designsystem.theme.NoteFlowDesignTokens
+import com.luuzr.jielv.MainActivity
 import com.luuzr.jielv.core.ui.GlassLevel
 import com.luuzr.jielv.core.ui.GlassSurface
 import com.luuzr.jielv.core.ui.LayoutTokens
@@ -59,10 +59,11 @@ class ReminderAlertActivity : ComponentActivity() {
 
         setContent {
             NoteFlowTheme {
+                val designTokens = NoteFlowDesignTokens.colors
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(NoteFlowSurfaceFloating.copy(alpha = 0.96f))
+                        .background(designTokens.surfaceFloating.copy(alpha = 0.96f))
                         .statusBarsPadding()
                         .navigationBarsPadding()
                         .padding(LayoutTokens.Space20),

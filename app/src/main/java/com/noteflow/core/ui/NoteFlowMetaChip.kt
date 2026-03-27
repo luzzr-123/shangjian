@@ -9,8 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.BorderStroke
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowGlassBorderSoft
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowGlassSurface
+import com.luuzr.jielv.core.designsystem.theme.NoteFlowDesignTokens
 
 @Composable
 fun NoteFlowMetaChip(
@@ -18,7 +17,8 @@ fun NoteFlowMetaChip(
     modifier: Modifier = Modifier,
     accentColor: Color? = null,
 ) {
-    val containerColor = accentColor?.copy(alpha = 0.14f) ?: NoteFlowGlassSurface.copy(alpha = 0.72f)
+    val designTokens = NoteFlowDesignTokens.colors
+    val containerColor = accentColor?.copy(alpha = 0.14f) ?: designTokens.glassSurface.copy(alpha = 0.72f)
     val contentColor = accentColor ?: MaterialTheme.colorScheme.onSurfaceVariant
     Surface(
         modifier = modifier,
@@ -27,7 +27,7 @@ fun NoteFlowMetaChip(
         shape = MaterialTheme.shapes.extraLarge,
         border = BorderStroke(
             width = 1.dp,
-            color = (accentColor ?: NoteFlowGlassBorderSoft).copy(alpha = 0.24f),
+            color = (accentColor ?: designTokens.glassBorderSoft).copy(alpha = 0.24f),
         ),
     ) {
         Text(

@@ -51,16 +51,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.luuzr.jielv.core.designsystem.theme.NoteFlowDesignTokens
 import com.luuzr.jielv.core.designsystem.theme.NoteFlowHabitAccent
 import com.luuzr.jielv.core.designsystem.theme.NoteFlowHabitAccentSoft
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowOutlineSoft
 import com.luuzr.jielv.core.designsystem.theme.NoteFlowTaskAccent
 import com.luuzr.jielv.core.designsystem.theme.NoteFlowTaskAccentSoft
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowTextSecondary
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowTextTertiary
 import com.luuzr.jielv.core.designsystem.theme.NoteFlowTodayAccent
 import com.luuzr.jielv.core.designsystem.theme.NoteFlowTodayAccentSoft
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowSurfaceVariant
 import com.luuzr.jielv.core.ui.GlassLevel
 import com.luuzr.jielv.core.ui.GlassSurface
 import com.luuzr.jielv.core.ui.LocalRadialExpansionController
@@ -590,6 +587,7 @@ private fun TodayStatusPill(
     accentColor: Color,
     modifier: Modifier = Modifier,
 ) {
+    val designTokens = NoteFlowDesignTokens.colors
     GlassSurface(
         modifier = modifier,
         accentColor = accentColor,
@@ -616,7 +614,7 @@ private fun TodayStatusPill(
                 Text(
                     text = label,
                     style = MaterialTheme.typography.labelSmall,
-                    color = NoteFlowTextTertiary,
+                    color = designTokens.textTertiary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -633,6 +631,7 @@ private fun TodayStatusPill(
 
 @Composable
 private fun TodayCompletionBar(summary: TodaySummaryUiModel) {
+    val designTokens = NoteFlowDesignTokens.colors
     val progress = remember(summary) {
         val total = summary.pendingTaskCount + summary.dueHabitCount + summary.completedCount
         if (total == 0) 0f else summary.completedCount / total.toFloat()
@@ -662,7 +661,7 @@ private fun TodayCompletionBar(summary: TodaySummaryUiModel) {
                 .fillMaxWidth()
                 .height(6.dp)
                 .background(
-                    color = NoteFlowSurfaceVariant,
+                    color = designTokens.surfaceVariant,
                     shape = RoundedCornerShape(999.dp),
                 ),
         ) {
@@ -681,10 +680,11 @@ private fun TodayCompletionBar(summary: TodaySummaryUiModel) {
 
 @Composable
 private fun TodaySectionCountPill(count: Int) {
+    val designTokens = NoteFlowDesignTokens.colors
     Box(
         modifier = Modifier
             .background(
-                color = NoteFlowOutlineSoft.copy(alpha = 0.64f),
+                color = designTokens.outlineSoft.copy(alpha = 0.64f),
                 shape = RoundedCornerShape(999.dp),
             )
             .padding(horizontal = 10.dp, vertical = 4.dp),
@@ -692,7 +692,7 @@ private fun TodaySectionCountPill(count: Int) {
         Text(
             text = count.toString(),
             style = MaterialTheme.typography.labelMedium,
-            color = NoteFlowTextSecondary,
+            color = designTokens.textSecondary,
         )
     }
 }

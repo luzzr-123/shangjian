@@ -30,10 +30,7 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.luuzr.jielv.app.navigation.TopLevelDestination
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowGlassBorder
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowGlassSurface
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowTextSecondary
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowTextTertiary
+import com.luuzr.jielv.core.designsystem.theme.NoteFlowDesignTokens
 import kotlin.math.abs
 
 @Composable
@@ -45,6 +42,7 @@ fun TopModuleTabBar(
     motionStyle: ModuleVisualStyle = selectedDestination.visualStyle,
     modifier: Modifier = Modifier,
 ) {
+    val designTokens = NoteFlowDesignTokens.colors
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
@@ -62,11 +60,11 @@ fun TopModuleTabBar(
                 .fillMaxWidth()
                 .height(74.dp)
                 .clip(RoundedCornerShape(32.dp))
-                .background(NoteFlowGlassSurface.copy(alpha = 0.56f))
+                .background(designTokens.glassSurface.copy(alpha = 0.56f))
                 .drawWithCache {
                     val overlay = Brush.verticalGradient(
                         colors = listOf(
-                            Color.White.copy(alpha = 0.30f),
+                            designTokens.glassInnerGlow.copy(alpha = 0.30f),
                             motionStyle.glassTintColor.copy(alpha = 0.16f),
                             Color.Transparent,
                         ),
@@ -77,7 +75,7 @@ fun TopModuleTabBar(
                             cornerRadius = androidx.compose.ui.geometry.CornerRadius(64f, 64f),
                         )
                         drawRoundRect(
-                            color = NoteFlowGlassBorder.copy(alpha = 0.36f),
+                            color = designTokens.glassBorder.copy(alpha = 0.36f),
                             cornerRadius = androidx.compose.ui.geometry.CornerRadius(64f, 64f),
                             style = Stroke(width = 1.dp.toPx()),
                         )
@@ -131,7 +129,7 @@ fun TopModuleTabBar(
                                 },
                                 contentDescription = null,
                                 tint = lerp(
-                                    start = NoteFlowTextSecondary,
+                                    start = designTokens.textSecondary,
                                     stop = MaterialTheme.colorScheme.onPrimary,
                                     fraction = selectionProgress,
                                 ),
@@ -140,7 +138,7 @@ fun TopModuleTabBar(
                                 text = destination.label,
                                 style = MaterialTheme.typography.labelLarge,
                                 color = lerp(
-                                    start = NoteFlowTextTertiary,
+                                    start = designTokens.textTertiary,
                                     stop = MaterialTheme.colorScheme.onPrimary,
                                     fraction = selectionProgress,
                                 ),
@@ -159,19 +157,20 @@ private fun TopTabHighlight(
     style: ModuleVisualStyle,
     modifier: Modifier = Modifier,
 ) {
+    val designTokens = NoteFlowDesignTokens.colors
     Box(
         modifier = modifier
             .width(width)
             .drawWithCache {
                 val topGlow = Brush.verticalGradient(
                     colors = listOf(
-                        Color.White.copy(alpha = 0.18f),
+                        designTokens.glassInnerGlow.copy(alpha = 0.18f),
                         Color.Transparent,
                     ),
                 )
                 val coreGlow = Brush.radialGradient(
                     colors = listOf(
-                        Color.White.copy(alpha = 0.18f),
+                        designTokens.glassInnerGlow.copy(alpha = 0.18f),
                         style.accentGlowColor.copy(alpha = 0.24f),
                         Color.Transparent,
                     ),
@@ -202,7 +201,7 @@ private fun TopTabHighlight(
                         cornerRadius = androidx.compose.ui.geometry.CornerRadius(size.height / 2f, size.height / 2f),
                     )
                     drawRoundRect(
-                        color = Color.White.copy(alpha = 0.14f),
+                        color = designTokens.glassInnerGlow.copy(alpha = 0.14f),
                         cornerRadius = androidx.compose.ui.geometry.CornerRadius(size.height / 2f, size.height / 2f),
                         style = Stroke(width = 1.dp.toPx()),
                     )

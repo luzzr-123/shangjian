@@ -10,11 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowGlassBorder
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowGlassBorderSoft
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowBackgroundRaised
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowSurface
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowSurfaceVariant
+import com.luuzr.jielv.core.designsystem.theme.NoteFlowDesignTokens
 
 enum class GlassLevel {
     Weak,
@@ -31,16 +27,17 @@ fun GlassSurface(
     strong: Boolean = false,
     content: @Composable BoxScope.() -> Unit,
 ) {
+    val designTokens = NoteFlowDesignTokens.colors
     val resolvedLevel = if (strong) GlassLevel.Strong else level
     val containerColor = when (resolvedLevel) {
-        GlassLevel.Weak -> NoteFlowBackgroundRaised
-        GlassLevel.Normal -> NoteFlowSurface
-        GlassLevel.Strong -> NoteFlowSurfaceVariant
+        GlassLevel.Weak -> designTokens.backgroundRaised
+        GlassLevel.Normal -> designTokens.surface
+        GlassLevel.Strong -> designTokens.surfaceVariant
     }
     val borderColor = when (resolvedLevel) {
-        GlassLevel.Weak -> NoteFlowGlassBorderSoft.copy(alpha = 0.68f)
-        GlassLevel.Normal -> NoteFlowGlassBorderSoft
-        GlassLevel.Strong -> NoteFlowGlassBorder
+        GlassLevel.Weak -> designTokens.glassBorderSoft.copy(alpha = 0.68f)
+        GlassLevel.Normal -> designTokens.glassBorderSoft
+        GlassLevel.Strong -> designTokens.glassBorder
     }
     val shadowElevation = when (resolvedLevel) {
         GlassLevel.Weak -> 2.dp

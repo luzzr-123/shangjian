@@ -11,7 +11,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.ui.unit.dp
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowTextSecondary
+import com.luuzr.jielv.core.designsystem.theme.NoteFlowDesignTokens
 
 @Composable
 fun NoteFlowPageHeader(
@@ -20,6 +20,7 @@ fun NoteFlowPageHeader(
     modifier: Modifier = Modifier,
     trailingContent: @Composable (() -> Unit)? = null,
 ) {
+    val designTokens = NoteFlowDesignTokens.colors
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -39,7 +40,7 @@ fun NoteFlowPageHeader(
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = NoteFlowTextSecondary,
+                    color = designTokens.textSecondary,
                 )
             }
         }

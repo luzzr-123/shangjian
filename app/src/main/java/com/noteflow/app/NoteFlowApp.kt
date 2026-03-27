@@ -23,7 +23,7 @@ import com.luuzr.jielv.app.navigation.NoteFlowNavHost
 import com.luuzr.jielv.app.navigation.RootRoutes
 import com.luuzr.jielv.app.navigation.TopLevelDestination
 import com.luuzr.jielv.core.designsystem.theme.MonetColorTokens
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowOverlayAmbient
+import com.luuzr.jielv.core.designsystem.theme.NoteFlowDesignTokens
 import com.luuzr.jielv.core.ui.ModuleVisualStyle
 import com.luuzr.jielv.core.ui.MotionTokens
 import com.luuzr.jielv.core.ui.ProvideRadialExpansionController
@@ -43,6 +43,7 @@ fun NoteFlowApp(
     onPendingHabitDetailConsumed: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    val designTokens = NoteFlowDesignTokens.colors
     val navController = rememberNavController()
     val radialExpansionController = rememberRadialExpansionController()
     var selectedTopLevelRoute by rememberSaveable { mutableStateOf(TopLevelDestination.TODAY.route) }
@@ -117,9 +118,9 @@ fun NoteFlowApp(
                 .drawWithCache {
                     val baseLayer = Brush.verticalGradient(
                         colors = listOf(
-                            MonetColorTokens.canvasRaised,
-                            MonetColorTokens.background,
-                            MonetColorTokens.background,
+                            designTokens.canvasRaised,
+                            designTokens.background,
+                            designTokens.background,
                         ),
                     )
                     val topGlow = Brush.radialGradient(
@@ -143,7 +144,7 @@ fun NoteFlowApp(
                         if (topGlowAlpha > 0.001f) drawRect(topGlow)
                         if (lowerGlowAlpha > 0.001f) drawRect(lowerGlow)
                         drawRect(animatedOverlayColor.copy(alpha = overlayAlpha))
-                        drawRect(NoteFlowOverlayAmbient.copy(alpha = ambientAlpha))
+                        drawRect(designTokens.overlayAmbient.copy(alpha = ambientAlpha))
                     }
                 },
         ) {

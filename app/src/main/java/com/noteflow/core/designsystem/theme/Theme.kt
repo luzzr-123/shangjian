@@ -7,23 +7,24 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val LightColorScheme = lightColorScheme(
     primary = NoteFlowTodayAccent,
-    onPrimary = NoteFlowOnAccent,
+    onPrimary = LightNoteFlowUiColors.onAccent,
     secondary = NoteFlowTaskAccent,
     tertiary = NoteFlowHabitAccent,
-    background = NoteFlowBackground,
-    onBackground = NoteFlowTextPrimary,
-    surface = NoteFlowSurface,
-    onSurface = NoteFlowTextPrimary,
-    surfaceVariant = NoteFlowSurfaceVariant,
-    onSurfaceVariant = NoteFlowTextSecondary,
-    outline = NoteFlowOutlineSoft,
-    outlineVariant = NoteFlowOutlineSoft.copy(alpha = 0.72f),
+    background = LightNoteFlowUiColors.background,
+    onBackground = LightNoteFlowUiColors.textPrimary,
+    surface = LightNoteFlowUiColors.surface,
+    onSurface = LightNoteFlowUiColors.textPrimary,
+    surfaceVariant = LightNoteFlowUiColors.surfaceVariant,
+    onSurfaceVariant = LightNoteFlowUiColors.textSecondary,
+    outline = LightNoteFlowUiColors.outlineSoft,
+    outlineVariant = LightNoteFlowUiColors.outlineSoft.copy(alpha = 0.72f),
     primaryContainer = NoteFlowTodayAccentSoft,
     secondaryContainer = NoteFlowTaskAccentSoft,
     tertiaryContainer = NoteFlowHabitAccentSoft,
@@ -32,17 +33,17 @@ private val LightColorScheme = lightColorScheme(
 
 private val DarkColorScheme = darkColorScheme(
     primary = NoteFlowTaskAccent,
-    onPrimary = Color(0xFF201E1A),
+    onPrimary = DarkNoteFlowUiColors.onAccent,
     secondary = NoteFlowHabitAccent,
     tertiary = NoteFlowNoteAccent,
-    background = Color(0xFF161514),
-    onBackground = Color(0xFFF3EFE8),
-    surface = Color(0xFF1D1B19),
-    onSurface = Color(0xFFF3EFE8),
-    surfaceVariant = Color(0xFF2A2724),
-    onSurfaceVariant = Color(0xFFD0C8BD),
-    outline = Color(0xFF4A443D),
-    outlineVariant = Color(0xFF3C3732),
+    background = DarkNoteFlowUiColors.background,
+    onBackground = DarkNoteFlowUiColors.textPrimary,
+    surface = DarkNoteFlowUiColors.surface,
+    onSurface = DarkNoteFlowUiColors.textPrimary,
+    surfaceVariant = DarkNoteFlowUiColors.surfaceVariant,
+    onSurfaceVariant = DarkNoteFlowUiColors.textSecondary,
+    outline = DarkNoteFlowUiColors.outlineSoft,
+    outlineVariant = DarkNoteFlowUiColors.outlineSoft.copy(alpha = 0.82f),
     primaryContainer = Color(0xFF37315A),
     secondaryContainer = Color(0xFF2D433B),
     tertiaryContainer = Color(0xFF4A4126),
@@ -55,6 +56,7 @@ fun NoteFlowTheme(
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit,
 ) {
+    val noteFlowUiColors = noteFlowUiColors(useDarkTheme = useDarkTheme)
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && useDarkTheme -> {
             dynamicDarkColorScheme(LocalContext.current)
@@ -66,10 +68,12 @@ fun NoteFlowTheme(
         else -> LightColorScheme
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = NoteFlowTypography,
-        shapes = NoteFlowShapes,
-        content = content,
-    )
+    CompositionLocalProvider(LocalNoteFlowUiColors provides noteFlowUiColors) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = NoteFlowTypography,
+            shapes = NoteFlowShapes,
+            content = content,
+        )
+    }
 }

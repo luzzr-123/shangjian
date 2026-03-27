@@ -11,32 +11,32 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.SwitchColors
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowBackgroundRaised
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowOutlineSoft
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowOnAccent
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowSurfaceVariant
+import com.luuzr.jielv.core.designsystem.theme.NoteFlowDesignTokens
 
 @Composable
 fun noteFlowSwitchColors(
     accentColor: Color = MaterialTheme.colorScheme.primary,
-): SwitchColors = SwitchDefaults.colors(
-    checkedThumbColor = NoteFlowBackgroundRaised,
-    checkedTrackColor = accentColor.copy(alpha = 0.82f),
-    checkedBorderColor = accentColor.copy(alpha = 0.42f),
-    checkedIconColor = accentColor,
-    uncheckedThumbColor = NoteFlowBackgroundRaised,
-    uncheckedTrackColor = NoteFlowSurfaceVariant.copy(alpha = 0.64f),
-    uncheckedBorderColor = NoteFlowOutlineSoft.copy(alpha = 0.68f),
-    uncheckedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.82f),
-    disabledCheckedThumbColor = NoteFlowBackgroundRaised.copy(alpha = 0.64f),
-    disabledCheckedTrackColor = accentColor.copy(alpha = 0.42f),
-    disabledCheckedBorderColor = accentColor.copy(alpha = 0.30f),
-    disabledCheckedIconColor = accentColor.copy(alpha = 0.64f),
-    disabledUncheckedThumbColor = NoteFlowBackgroundRaised.copy(alpha = 0.64f),
-    disabledUncheckedTrackColor = NoteFlowSurfaceVariant.copy(alpha = 0.46f),
-    disabledUncheckedBorderColor = NoteFlowOutlineSoft.copy(alpha = 0.42f),
-    disabledUncheckedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.54f),
-)
+): SwitchColors {
+    val designTokens = NoteFlowDesignTokens.colors
+    return SwitchDefaults.colors(
+        checkedThumbColor = designTokens.backgroundRaised,
+        checkedTrackColor = accentColor.copy(alpha = 0.82f),
+        checkedBorderColor = accentColor.copy(alpha = 0.42f),
+        checkedIconColor = accentColor,
+        uncheckedThumbColor = designTokens.backgroundRaised,
+        uncheckedTrackColor = designTokens.surfaceVariant.copy(alpha = 0.64f),
+        uncheckedBorderColor = designTokens.outlineSoft.copy(alpha = 0.68f),
+        uncheckedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.82f),
+        disabledCheckedThumbColor = designTokens.backgroundRaised.copy(alpha = 0.64f),
+        disabledCheckedTrackColor = accentColor.copy(alpha = 0.42f),
+        disabledCheckedBorderColor = accentColor.copy(alpha = 0.30f),
+        disabledCheckedIconColor = accentColor.copy(alpha = 0.64f),
+        disabledUncheckedThumbColor = designTokens.backgroundRaised.copy(alpha = 0.64f),
+        disabledUncheckedTrackColor = designTokens.surfaceVariant.copy(alpha = 0.46f),
+        disabledUncheckedBorderColor = designTokens.outlineSoft.copy(alpha = 0.42f),
+        disabledUncheckedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.54f),
+    )
+}
 
 @Composable
 fun noteFlowButtonColors(
@@ -49,35 +49,44 @@ fun noteFlowButtonColors(
 )
 
 @Composable
-fun noteFlowOutlinedButtonColors(): ButtonColors = ButtonDefaults.outlinedButtonColors(
-    containerColor = NoteFlowBackgroundRaised,
-    contentColor = MaterialTheme.colorScheme.onSurface,
-    disabledContainerColor = NoteFlowSurfaceVariant.copy(alpha = 0.8f),
-    disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.62f),
-)
+fun noteFlowOutlinedButtonColors(): ButtonColors {
+    val designTokens = NoteFlowDesignTokens.colors
+    return ButtonDefaults.outlinedButtonColors(
+        containerColor = designTokens.backgroundRaised,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        disabledContainerColor = designTokens.surfaceVariant.copy(alpha = 0.8f),
+        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.62f),
+    )
+}
 
 @Composable
 fun noteFlowFilterChipColors(
     accentColor: Color = MaterialTheme.colorScheme.primary,
-): SelectableChipColors = FilterChipDefaults.filterChipColors(
-    selectedContainerColor = accentColor.copy(alpha = 0.18f),
-    selectedLabelColor = MaterialTheme.colorScheme.onSurface,
-    selectedLeadingIconColor = accentColor,
-    selectedTrailingIconColor = accentColor,
-    containerColor = NoteFlowBackgroundRaised,
-    labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-    iconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-    disabledContainerColor = NoteFlowSurfaceVariant.copy(alpha = 0.8f),
-    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.58f),
-)
+): SelectableChipColors {
+    val designTokens = NoteFlowDesignTokens.colors
+    return FilterChipDefaults.filterChipColors(
+        selectedContainerColor = accentColor.copy(alpha = 0.18f),
+        selectedLabelColor = MaterialTheme.colorScheme.onSurface,
+        selectedLeadingIconColor = accentColor,
+        selectedTrailingIconColor = accentColor,
+        containerColor = designTokens.backgroundRaised,
+        labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        iconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        disabledContainerColor = designTokens.surfaceVariant.copy(alpha = 0.8f),
+        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.58f),
+    )
+}
 
 @Composable
 fun noteFlowCheckboxColors(
     accentColor: Color = MaterialTheme.colorScheme.primary,
-): CheckboxColors = CheckboxDefaults.colors(
-    checkedColor = accentColor.copy(alpha = 0.86f),
-    checkmarkColor = NoteFlowOnAccent,
-    uncheckedColor = NoteFlowSurfaceVariant.copy(alpha = 0.72f),
-    disabledCheckedColor = accentColor.copy(alpha = 0.42f),
-    disabledUncheckedColor = NoteFlowSurfaceVariant.copy(alpha = 0.36f),
-)
+): CheckboxColors {
+    val designTokens = NoteFlowDesignTokens.colors
+    return CheckboxDefaults.colors(
+        checkedColor = accentColor.copy(alpha = 0.86f),
+        checkmarkColor = designTokens.onAccent,
+        uncheckedColor = designTokens.surfaceVariant.copy(alpha = 0.72f),
+        disabledCheckedColor = accentColor.copy(alpha = 0.42f),
+        disabledUncheckedColor = designTokens.surfaceVariant.copy(alpha = 0.36f),
+    )
+}

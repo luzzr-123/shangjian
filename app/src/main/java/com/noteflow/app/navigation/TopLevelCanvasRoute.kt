@@ -19,7 +19,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowOverlayAmbient
+import com.luuzr.jielv.core.designsystem.theme.NoteFlowDesignTokens
 import com.luuzr.jielv.core.ui.ModuleVisualStyle
 import com.luuzr.jielv.core.ui.MotionTokens
 import com.luuzr.jielv.core.ui.TopModuleTabBar
@@ -57,6 +57,7 @@ fun TopLevelCanvasRoute(
     onOpenNotes: () -> Unit,
     onOpenSettings: () -> Unit,
 ) {
+    val designTokens = NoteFlowDesignTokens.colors
     val destinations = TopLevelDestination.entries
     val selectedIndex = destinations.indexOf(selectedDestination).coerceAtLeast(0)
     val pagerState = rememberPagerState(
@@ -108,7 +109,7 @@ fun TopLevelCanvasRoute(
                 onDrawBehind {
                     drawRect(canvasGlow)
                     drawRect(motionStyle.overlayColor.copy(alpha = 0.004f))
-                    drawRect(NoteFlowOverlayAmbient.copy(alpha = 0.010f))
+                    drawRect(designTokens.overlayAmbient.copy(alpha = 0.010f))
                 }
             },
     ) {

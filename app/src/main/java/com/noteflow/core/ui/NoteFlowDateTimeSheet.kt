@@ -49,8 +49,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowSurfaceFloating
-import com.luuzr.jielv.core.designsystem.theme.NoteFlowTextSecondary
+import com.luuzr.jielv.core.designsystem.theme.NoteFlowDesignTokens
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -109,6 +108,8 @@ fun NoteFlowDateTimeSheet(
 ) {
     if (!visible) return
 
+    val designTokens = NoteFlowDesignTokens.colors
+
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val dateFormatter = remember { DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.getDefault()) }
     val dateTimeFormatter = remember { DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm", Locale.getDefault()) }
@@ -154,7 +155,7 @@ fun NoteFlowDateTimeSheet(
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         sheetState = sheetState,
-        containerColor = NoteFlowSurfaceFloating.copy(alpha = 0.98f),
+        containerColor = designTokens.surfaceFloating.copy(alpha = 0.98f),
     ) {
         Column(
             modifier = Modifier
@@ -387,6 +388,7 @@ private fun MonthCalendar(
     onMonthChanged: (YearMonth) -> Unit,
     onDateSelected: (LocalDate) -> Unit,
 ) {
+    val designTokens = NoteFlowDesignTokens.colors
     val monthFormatter = remember { DateTimeFormatter.ofPattern("yyyy-MM", Locale.getDefault()) }
     val weekLabels = listOf("一", "二", "三", "四", "五", "六", "日")
     val firstDayOffset = month.atDay(1).dayOfWeek.value - 1
@@ -431,7 +433,7 @@ private fun MonthCalendar(
                     Text(
                         text = label,
                         style = MaterialTheme.typography.labelLarge,
-                        color = NoteFlowTextSecondary,
+                        color = designTokens.textSecondary,
                     )
                 }
             }
